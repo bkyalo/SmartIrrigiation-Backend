@@ -106,3 +106,27 @@ class SensorController extends BaseController
             return $this->handleException($e, 'Failed to update sensor');
         }
     }
+
+    /**
+     * Remove the specified sensor from storage.
+     */
+    public function destroy(Sensor $sensor): JsonResponse
+    {
+        try {
+            DB::beginTransaction();
+            
+            $sensor->delete();
+            
+            DB::commit();
+            
+            return $this->sendResponse(
+                null,
+                'Sensor deleted successfully.',
+                Response::HTTP_NO_CONTENT
+            );
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return $this->handleException($e, 'Failed to delete sensor');
+        }
+    }
+}

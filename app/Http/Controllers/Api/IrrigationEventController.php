@@ -372,3 +372,4 @@ class IrrigationEventController extends BaseController
             return $this->handleException($e, 'Failed to retrieve irrigation event statistics');
         }
     }
+}

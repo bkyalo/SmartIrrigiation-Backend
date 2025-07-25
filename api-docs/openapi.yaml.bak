@@ -1,0 +1,507 @@
+openapi: 3.0.3
+info:
+  title: Smart Irrigation System API
+  description: |
+    This is the API documentation for the Smart Irrigation System.
+    The API is organized around REST and uses JSON for data exchange.
+  version: 1.0.0
+  contact:
+    name: API Support
+    email: support@smartirrigation.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:8000/api/v1
+    description: Local development server
+  - url: https://api.smartirrigation.com/v1
+    description: Production server
+
+security:
+  - bearerAuth: []
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    # Common Schemas
+    Error:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+          example: "An error occurred"
+
+    ValidationError:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "The given data was invalid."
+        errors:
+          type: object
+          additionalProperties: true
+          example: {"field_name": ["The field name is required."]}
+
+    # Approval Request Schemas
+    ApprovalRequest:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        action_type:
+          type: string
+          enum: ["irrigation", "valve_control", "pump_control", "schedule_update", "system_config", "maintenance", "other"]
+          example: "irrigation"
+        status:
+          type: string
+          enum: ["pending", "approved", "rejected", "expired", "cancelled"]
+          example: "pending"
+        priority:
+          type: string
+          enum: ["low", "normal", "high", "critical"]
+          example: "normal"
+        request_notes:
+          type: string
+          nullable: true
+          example: "Please approve this irrigation request"
+        response_notes:
+          type: string
+          nullable: true
+          example: "Approved as requested"
+        action_parameters:
+          type: object
+          additionalProperties: true
+          example: {"minutes": 30, "zone": "north"}
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        approved_at:
+          type: string
+          format: date-time
+          nullable: true
+        expires_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    StoreApprovalRequest:
+      type: object
+      required:
+        - action_type
+        - priority
+      properties:
+        action_type:
+          type: string
+          enum: ["irrigation", "valve_control", "pump_control", "schedule_update", "system_config", "maintenance", "other"]
+          example: "irrigation"
+        action_parameters:
+          type: object
+          additionalProperties: true
+          example: {"minutes": 30, "zone": "north"}
+        priority:
+          type: string
+          enum: ["low", "normal", "high", "critical"]
+          example: "normal"
+        request_notes:
+          type: string
+          nullable: true
+          example: "Please approve this request"
+        expires_at:
+          type: string
+          format: date-time
+          nullable: true
+          example: "2025-08-01T23:59:59Z"
+
+    UpdateApprovalRequest:
+      type: object
+      properties:
+        priority:
+          type: string
+          enum: ["low", "normal", "high", "critical"]
+          example: "high"
+        request_notes:
+          type: string
+          nullable: true
+          example: "Updated request notes"
+        response_notes:
+          type: string
+          nullable: true
+          example: "Additional notes from approver"
+
+  parameters:
+    approvalRequestId:
+      name: approvalRequest
+      in: path
+      description: ID of the approval request
+      required: true
+      schema:
+        type: integer
+        format: int64
+
+    approvalRequestStatus:
+      name: status
+      in: query
+      description: Filter by status
+      required: false
+      schema:
+        type: string
+        enum: ["pending", "approved", "rejected", "expired", "cancelled"]
+        example: "pending"
+
+    approvalRequestActionType:
+      name: action_type
+      in: query
+      description: Filter by action type
+      required: false
+      schema:
+        type: string
+        enum: ["irrigation", "valve_control", "pump_control", "schedule_update", "system_config", "maintenance", "other"]
+
+    approvalRequestPriority:
+      name: priority
+      in: query
+      description: Filter by priority
+      required: false
+      schema:
+        type: string
+        enum: ["low", "normal", "high", "critical"]
+
+  responses:
+    UnauthorizedError:
+      description: Unauthorized - Authentication credentials were missing or incorrect
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    ForbiddenError:
+      description: Forbidden - The request was valid, but the server is refusing action
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    NotFoundError:
+      description: The requested resource was not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    ValidationError:
+      description: The request was well-formed but contains semantic errors
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ValidationError'
+
+paths:
+  /approval-requests:
+    get:
+      tags:
+        - Approval Requests
+      summary: List all approval requests
+      description: Returns a paginated list of approval requests with optional filtering
+      parameters:
+        - $ref: '#/components/parameters/approvalRequestStatus'
+        - $ref: '#/components/parameters/approvalRequestActionType'
+        - $ref: '#/components/parameters/approvalRequestPriority'
+        - name: requester_id
+          in: query
+          description: Filter by requester ID
+          schema:
+            type: integer
+        - name: approver_id
+          in: query
+          description: Filter by approver ID
+          schema:
+            type: integer
+        - name: per_page
+          in: query
+          description: Items per page
+          schema:
+            type: integer
+            default: 15
+      responses:
+        '200':
+          description: A paginated list of approval requests
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ApprovalRequest'
+                  links:
+                    $ref: '#/components/schemas/PaginationLinks'
+                  meta:
+                    $ref: '#/components/schemas/PaginationMeta'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+
+    post:
+      tags:
+        - Approval Requests
+      summary: Create a new approval request
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StoreApprovalRequest'
+      responses:
+        '201':
+          description: Approval request created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApprovalRequest'
+        '400':
+          description: Invalid input
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /approval-requests/{approvalRequest}:
+    parameters:
+      - $ref: '#/components/parameters/approvalRequestId'
+    
+    get:
+      tags:
+        - Approval Requests
+      summary: Get a specific approval request
+      responses:
+        '200':
+          description: Approval request details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApprovalRequest'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+    put:
+      tags:
+        - Approval Requests
+      summary: Update an approval request
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateApprovalRequest'
+      responses:
+        '200':
+          description: Approval request updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApprovalRequest'
+        '400':
+          description: Cannot update a processed request
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+    delete:
+      tags:
+        - Approval Requests
+      summary: Delete an approval request
+      description: Only pending approval requests can be deleted
+      responses:
+        '204':
+          description: Approval request deleted successfully
+        '400':
+          description: Cannot delete a processed request
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+  /approval-requests/{approvalRequest}/approve:
+    parameters:
+      - $ref: '#/components/parameters/approvalRequestId'
+    
+    post:
+      tags:
+        - Approval Requests
+      summary: Approve an approval request
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                notes:
+                  type: string
+                  description: Optional notes about the approval
+      responses:
+        '200':
+          description: Approval request approved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApprovalRequest'
+        '400':
+          description: Cannot approve a request that is not pending
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          description: Forbidden - User cannot approve their own request
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+  /approval-requests/{approvalRequest}/reject:
+    parameters:
+      - $ref: '#/components/parameters/approvalRequestId'
+    
+    post:
+      tags:
+        - Approval Requests
+      summary: Reject an approval request
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                notes:
+                  type: string
+                  description: Optional notes about the rejection
+      responses:
+        '200':
+          description: Approval request rejected successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApprovalRequest'
+        '400':
+          description: Cannot reject a request that is not pending
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          description: Forbidden - User cannot reject their own request
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+  /approval-requests/{approvalRequest}/cancel:
+    parameters:
+      - $ref: '#/components/parameters/approvalRequestId'
+    
+    post:
+      tags:
+        - Approval Requests
+      summary: Cancel an approval request
+      description: Only the requester can cancel their own request
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                notes:
+                  type: string
+                  description: Optional notes about the cancellation
+      responses:
+        '200':
+          description: Approval request cancelled successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApprovalRequest'
+        '400':
+          description: Cannot cancel a request that is not pending
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          description: Forbidden - Only the requester can cancel their own request
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+  /approval-requests/stats:
+    get:
+      tags:
+        - Approval Requests
+      summary: Get approval request statistics
+      responses:
+        '200':
+          description: Approval request statistics
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                    example: 100
+                  pending:
+                    type: integer
+                    example: 25
+                  approved:
+                    type: integer
+                    example: 50
+                  rejected:
+                    type: integer
+                    example: 15
+                  expired:
+                    type: integer
+                    example: 5
+                  cancelled:
+                    type: integer
+                    example: 5
+                  by_action_type:
+                    type: object
+                    additionalProperties:
+                      type: integer
+                    example:
+                      irrigation: 40
+                      valve_control: 30
+                      pump_control: 20
+                      other: 10
+                  by_priority:
+                    type: object
+                    additionalProperties:
+                      type: integer
+                    example:
+                      low: 20
+                      normal: 60
+                      high: 15
+                      critical: 5
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'

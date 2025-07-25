@@ -250,3 +250,4 @@ class ScheduleController extends BaseController
             return $this->handleException($e, 'Failed to calculate next run time');
         }
     }
+}

@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\DB;
 class ApprovalRequestController extends BaseController
 {
     /**
-     * Display a listing of approval requests.
+     * Display a listing of the resource.
      */
     public function index(): JsonResponse
     {
@@ -51,7 +51,7 @@ class ApprovalRequestController extends BaseController
     }
     
     /**
-     * Store a newly created approval request in storage.
+     * Store a newly created resource in storage.
      */
     public function store(StoreApprovalRequestRequest $request): JsonResponse
     {
@@ -83,7 +83,7 @@ class ApprovalRequestController extends BaseController
     }
     
     /**
-     * Display the specified approval request.
+     * Display the specified resource.
      */
     public function show(ApprovalRequest $approvalRequest): JsonResponse
     {
@@ -98,7 +98,7 @@ class ApprovalRequestController extends BaseController
     }
     
     /**
-     * Update the specified approval request in storage.
+     * Update the specified resource in storage.
      */
     public function update(UpdateApprovalRequestRequest $request, ApprovalRequest $approvalRequest): JsonResponse
     {
@@ -123,7 +123,7 @@ class ApprovalRequestController extends BaseController
     }
     
     /**
-     * Remove the specified approval request from storage.
+     * Remove the specified resource from storage.
      */
     public function destroy(ApprovalRequest $approvalRequest): JsonResponse
     {
@@ -314,3 +314,4 @@ class ApprovalRequestController extends BaseController
             'Available action types, statuses, and priorities retrieved successfully.'
         );
     }
+}
