@@ -9,6 +9,8 @@ use App\Http\Controllers\Api\SensorController;
 use App\Http\Controllers\Api\SensorReadingController;
 use App\Http\Controllers\Api\TankController;
 use App\Http\Controllers\Api\ValveController;
+use App\Http\Controllers\Auth\AuthenticatedSessionController;
+use App\Http\Controllers\Api\Auth\RegisterController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -34,10 +36,11 @@ Route::prefix('v1')->group(function () {
         ]);
     });
 
-    // Authentication routes (if using Laravel Sanctum/Passport)
-    // Route::post('/login', [AuthController::class, 'login']);
-    // Route::post('/register', [AuthController::class, 'register']);
-    // Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
+    // Authentication routes
+    Route::post('/login', [AuthenticatedSessionController::class, 'store']);
+    Route::post('/register', [RegisterController::class, 'register']);
+    Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])
+        ->middleware('auth:sanctum');
     
     // Protected routes (require authentication)
     Route::middleware(['auth:sanctum'])->group(function () {

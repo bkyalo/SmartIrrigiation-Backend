@@ -22,7 +22,7 @@ return new class extends Migration
             $table->enum('status', ['idle', 'irrigating', 'scheduled', 'error'])->default('idle');
             $table->decimal('latitude', 10, 8)->nullable();
             $table->decimal('longitude', 11, 8)->nullable();
-            $table->polygon('geometry')->nullable();
+            // Removed polygon column as it requires spatial database support
             $table->timestamps();
             $table->softDeletes();
         });

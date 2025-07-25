@@ -28,7 +28,7 @@ class TankResource extends JsonResource
             'min_threshold' => $this->whenNotNull($this->min_threshold, fn () => (float) $this->min_threshold),
             'max_threshold' => $this->whenNotNull($this->max_threshold, fn () => (float) $this->max_threshold),
             'status' => $this->status,
-            'status_display' => $this->getStatus(),
+            'status_display' => $this->status, // Using the accessor defined in the model
             'needs_refill' => $this->needsRefill(),
             'is_full' => $this->isFull(),
             'location' => $this->location,

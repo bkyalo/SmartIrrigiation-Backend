@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Str;
 
 class Tank extends Model
 {
@@ -42,9 +43,43 @@ class Tank extends Model
         'is_active' => 'boolean',
         'min_threshold' => 'decimal:2',
         'max_threshold' => 'decimal:2',
+        'status' => 'string',
         'last_maintenance' => 'datetime',
         'deleted_at' => 'datetime',
     ];
+
+    /**
+     * The possible status values.
+     *
+     * @var array
+     */
+    public const STATUS_ACTIVE = 'active';
+    public const STATUS_MAINTENANCE = 'maintenance';
+    public const STATUS_INACTIVE = 'inactive';
+
+    /**
+     * Get the status options for the tank.
+     *
+     * @return array
+     */
+    public static function getStatusOptions(): array
+    {
+        return [
+            self::STATUS_ACTIVE => 'Active',
+            self::STATUS_MAINTENANCE => 'Under Maintenance',
+            self::STATUS_INACTIVE => 'Inactive',
+        ];
+    }
+
+    /**
+     * Get the display-friendly status.
+     *
+     * @return string
+     */
+    public function getStatusAttribute($value): string
+    {
+        return $this->getStatusOptions()[$value] ?? $value;
+    }
 
     /**
      * Get the valves associated with the tank.

@@ -95,6 +95,787 @@ components:
           type: integer
           example: 75
 
+    # Tank Schemas
+    Tank:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: "Main Water Tank"
+        capacity:
+          type: number
+          format: float
+          example: 1000.00
+        current_level:
+          type: number
+          format: float
+          example: 750.50
+        latitude:
+          type: number
+          format: float
+          nullable: true
+          example: 40.7128
+        longitude:
+          type: number
+          format: float
+          nullable: true
+          example: -74.0060
+        is_active:
+          type: boolean
+          example: true
+        min_threshold:
+          type: number
+          format: float
+          example: 100.00
+        max_threshold:
+          type: number
+          format: float
+          example: 950.00
+        status:
+          type: string
+          enum: ["empty", "low", "normal", "full", "overflow"]
+          example: "normal"
+        last_maintenance:
+          type: string
+          format: date-time
+          nullable: true
+          example: "2025-06-15T10:00:00Z"
+        notes:
+          type: string
+          nullable: true
+          example: "Needs cleaning next month"
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        deleted_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    StoreTank:
+      type: object
+      required:
+        - name
+        - capacity
+      properties:
+        name:
+          type: string
+          example: "Main Water Tank"
+        capacity:
+          type: number
+          format: float
+          example: 1000.00
+        current_level:
+          type: number
+          format: float
+          example: 0.00
+        latitude:
+          type: number
+          format: float
+          nullable: true
+          example: 40.7128
+        longitude:
+          type: number
+          format: float
+          nullable: true
+          example: -74.0060
+        is_active:
+          type: boolean
+          example: true
+        min_threshold:
+          type: number
+          format: float
+          example: 100.00
+        max_threshold:
+          type: number
+          format: float
+          example: 950.00
+        notes:
+          type: string
+          nullable: true
+          example: "Installed on June 2025"
+
+    UpdateTank:
+      type: object
+      properties:
+        name:
+          type: string
+          example: "Main Water Tank (Updated)"
+        capacity:
+          type: number
+          format: float
+          example: 1200.00
+        current_level:
+          type: number
+          format: float
+          example: 500.00
+        latitude:
+          type: number
+          format: float
+          nullable: true
+          example: 40.7128
+        longitude:
+          type: number
+          format: float
+          nullable: true
+          example: -74.0060
+        is_active:
+          type: boolean
+          example: true
+        min_threshold:
+          type: number
+          format: float
+          example: 150.00
+        max_threshold:
+          type: number
+          format: float
+          example: 1100.00
+        status:
+          type: string
+          enum: ["empty", "low", "normal", "full", "overflow"]
+          example: "normal"
+        last_maintenance:
+          type: string
+          format: date-time
+          nullable: true
+          example: "2025-06-15T10:00:00Z"
+        notes:
+          type: string
+          nullable: true
+          example: "Updated tank details"
+
+    # Plot Schemas
+    Plot:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: "North Field"
+        description:
+          type: string
+          nullable: true
+          example: "Main field for corn crops"
+        area:
+          type: number
+          format: float
+          example: 1000.50
+        crop_type:
+          type: string
+          nullable: true
+          example: "Corn"
+        planting_date:
+          type: string
+          format: date
+          nullable: true
+          example: "2025-05-01"
+        status:
+          type: string
+          enum: ["active", "inactive", "fallow", "under_maintenance"]
+          example: "active"
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        deleted_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    StorePlot:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          example: "North Field"
+        description:
+          type: string
+          nullable: true
+          example: "Main field for corn crops"
+        area:
+          type: number
+          format: float
+          example: 1000.50
+        crop_type:
+          type: string
+          nullable: true
+          example: "Corn"
+        planting_date:
+          type: string
+          format: date
+          nullable: true
+          example: "2025-05-01"
+        status:
+          type: string
+          enum: ["active", "inactive", "fallow", "under_maintenance"]
+          example: "active"
+
+    UpdatePlot:
+      type: object
+      properties:
+        name:
+          type: string
+          example: "North Field (Updated)"
+        description:
+          type: string
+          nullable: true
+          example: "Updated description"
+        area:
+          type: number
+          format: float
+          example: 1050.75
+        crop_type:
+          type: string
+          nullable: true
+          example: "Soybean"
+        planting_date:
+          type: string
+          format: date
+          nullable: true
+          example: "2025-06-01"
+        status:
+          type: string
+          enum: ["active", "inactive", "fallow", "under_maintenance"]
+          example: "active"
+
+    # Valve Schemas
+    Valve:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: "Main Valve 1"
+        type:
+          type: string
+          enum: ["tank", "plot", "zone"]
+          example: "zone"
+        tank_id:
+          type: integer
+          nullable: true
+          example: 1
+        plot_id:
+          type: integer
+          nullable: true
+          example: 1
+        is_open:
+          type: boolean
+          example: false
+        flow_rate:
+          type: number
+          format: float
+          example: 10.5
+        last_actuated:
+          type: string
+          format: date-time
+          nullable: true
+          example: "2025-07-20T14:30:00Z"
+        status:
+          type: string
+          enum: ["operational", "maintenance", "error"]
+          example: "operational"
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        deleted_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    StoreValve:
+      type: object
+      required:
+        - name
+        - type
+      properties:
+        name:
+          type: string
+          example: "Main Valve 1"
+        type:
+          type: string
+          enum: ["tank", "plot", "zone"]
+          example: "zone"
+        tank_id:
+          type: integer
+          nullable: true
+          example: 1
+        plot_id:
+          type: integer
+          nullable: true
+          example: 1
+        flow_rate:
+          type: number
+          format: float
+          example: 10.5
+        status:
+          type: string
+          enum: ["operational", "maintenance", "error"]
+          example: "operational"
+
+    UpdateValve:
+      type: object
+      properties:
+        name:
+          type: string
+          example: "Main Valve 1 (Updated)"
+        type:
+          type: string
+          enum: ["tank", "plot", "zone"]
+          example: "zone"
+        tank_id:
+          type: integer
+          nullable: true
+          example: 1
+        plot_id:
+          type: integer
+          nullable: true
+          example: 1
+        flow_rate:
+          type: number
+          format: float
+          example: 11.0
+        status:
+          type: string
+          enum: ["operational", "maintenance", "error"]
+          example: "operational"
+
+    # Pump Schemas
+    Pump:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: "Main Pump 1"
+        status:
+          type: string
+          enum: ["stopped", "running", "paused", "error"]
+          example: "stopped"
+        power_consumption:
+          type: number
+          format: float
+          example: 750.50
+        flow_rate:
+          type: number
+          format: float
+          example: 50.25
+        total_runtime:
+          type: integer
+          example: 3600
+        last_maintenance:
+          type: string
+          format: date-time
+          nullable: true
+          example: "2025-06-15T10:00:00Z"
+        error_code:
+          type: string
+          nullable: true
+          example: "E001"
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        deleted_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    StorePump:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          example: "Main Pump 1"
+        power_consumption:
+          type: number
+          format: float
+          example: 750.50
+        flow_rate:
+          type: number
+          format: float
+          example: 50.25
+        last_maintenance:
+          type: string
+          format: date-time
+          nullable: true
+          example: "2025-06-15T10:00:00Z"
+
+    UpdatePump:
+      type: object
+      properties:
+        name:
+          type: string
+          example: "Main Pump 1 (Updated)"
+        power_consumption:
+          type: number
+          format: float
+          example: 800.00
+        flow_rate:
+          type: number
+          format: float
+          example: 55.00
+        last_maintenance:
+          type: string
+          format: date-time
+          nullable: true
+          example: "2025-06-20T10:00:00Z"
+        error_code:
+          type: string
+          nullable: true
+          example: null
+
+    # Sensor Schemas
+    Sensor:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: "Soil Moisture 1"
+        type:
+          type: string
+          enum: ["soil_moisture", "temperature", "humidity", "rainfall", "water_level", "flow", "pressure", "ph", "ec", "light"]
+          example: "soil_moisture"
+        location_type:
+          type: string
+          enum: ["tank", "plot", "valve", "pump", "environment"]
+          example: "plot"
+        location_id:
+          type: integer
+          example: 1
+        min_value:
+          type: number
+          format: float
+          nullable: true
+          example: 0.0
+        max_value:
+          type: number
+          format: float
+          nullable: true
+          example: 100.0
+        unit:
+          type: string
+          example: "%"
+        is_active:
+          type: boolean
+          example: true
+        last_reading_at:
+          type: string
+          format: date-time
+          nullable: true
+          example: "2025-07-25T14:30:00Z"
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        deleted_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    StoreSensor:
+      type: object
+      required:
+        - name
+        - type
+        - location_type
+        - location_id
+      properties:
+        name:
+          type: string
+          example: "Soil Moisture 1"
+        type:
+          type: string
+          enum: ["soil_moisture", "temperature", "humidity", "rainfall", "water_level", "flow", "pressure", "ph", "ec", "light"]
+          example: "soil_moisture"
+        location_type:
+          type: string
+          enum: ["tank", "plot", "valve", "pump", "environment"]
+          example: "plot"
+        location_id:
+          type: integer
+          example: 1
+        min_value:
+          type: number
+          format: float
+          nullable: true
+          example: 0.0
+        max_value:
+          type: number
+          format: float
+          nullable: true
+          example: 100.0
+        unit:
+          type: string
+          example: "%"
+        is_active:
+          type: boolean
+          example: true
+
+    UpdateSensor:
+      type: object
+      properties:
+        name:
+          type: string
+          example: "Soil Moisture 1 (Updated)"
+        type:
+          type: string
+          enum: ["soil_moisture", "temperature", "humidity", "rainfall", "water_level", "flow", "pressure", "ph", "ec", "light"]
+          example: "soil_moisture"
+        location_type:
+          type: string
+          enum: ["tank", "plot", "valve", "pump", "environment"]
+          example: "plot"
+        location_id:
+          type: integer
+          example: 1
+        min_value:
+          type: number
+          format: float
+          nullable: true
+          example: 0.0
+        max_value:
+          type: number
+          format: float
+          nullable: true
+          example: 100.0
+        unit:
+          type: string
+          example: "%"
+        is_active:
+          type: boolean
+          example: true
+
+    # Sensor Reading Schemas
+    SensorReading:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        sensor_id:
+          type: integer
+          example: 1
+        value:
+          type: number
+          format: float
+          example: 65.5
+        unit:
+          type: string
+          example: "%"
+        recorded_at:
+          type: string
+          format: date-time
+          example: "2025-07-25T14:30:00Z"
+        metadata:
+          type: object
+          additionalProperties: true
+          example: {"battery_level": 85, "signal_strength": "good"}
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    StoreSensorReading:
+      type: object
+      required:
+        - sensor_id
+        - value
+        - unit
+      properties:
+        sensor_id:
+          type: integer
+          example: 1
+        value:
+          type: number
+          format: float
+          example: 65.5
+        unit:
+          type: string
+          example: "%"
+        recorded_at:
+          type: string
+          format: date-time
+          nullable: true
+          example: "2025-07-25T14:30:00Z"
+        metadata:
+          type: object
+          additionalProperties: true
+          example: {"battery_level": 85, "signal_strength": "good"}
+
+    # Schedule Schemas
+    Schedule:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: "Morning Irrigation"
+        description:
+          type: string
+          nullable: true
+          example: "Daily morning irrigation for the north field"
+        frequency:
+          type: string
+          enum: ["once", "daily", "weekly", "monthly", "custom"]
+          example: "daily"
+        frequency_params:
+          type: object
+          additionalProperties: true
+          example: {"days": [1, 3, 5], "time": "06:00"}
+        start_date:
+          type: string
+          format: date
+          example: "2025-08-01"
+        end_date:
+          type: string
+          format: date
+          nullable: true
+          example: "2025-10-31"
+        start_time:
+          type: string
+          format: time
+          example: "06:00:00"
+        duration_minutes:
+          type: integer
+          example: 30
+        is_active:
+          type: boolean
+          example: true
+        last_run:
+          type: string
+          format: date-time
+          nullable: true
+          example: "2025-07-25T06:00:00Z"
+        next_run:
+          type: string
+          format: date-time
+          nullable: true
+          example: "2025-07-26T06:00:00Z"
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        deleted_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    StoreSchedule:
+      type: object
+      required:
+        - name
+        - frequency
+        - start_date
+        - start_time
+        - duration_minutes
+      properties:
+        name:
+          type: string
+          example: "Morning Irrigation"
+        description:
+          type: string
+          nullable: true
+          example: "Daily morning irrigation for the north field"
+        frequency:
+          type: string
+          enum: ["once", "daily", "weekly", "monthly", "custom"]
+          example: "daily"
+        frequency_params:
+          type: object
+          additionalProperties: true
+          example: {"days": [1, 3, 5], "time": "06:00"}
+        start_date:
+          type: string
+          format: date
+          example: "2025-08-01"
+        end_date:
+          type: string
+          format: date
+          nullable: true
+          example: "2025-10-31"
+        start_time:
+          type: string
+          format: time
+          example: "06:00:00"
+        duration_minutes:
+          type: integer
+          example: 30
+        is_active:
+          type: boolean
+          example: true
+
+    UpdateSchedule:
+      type: object
+      properties:
+        name:
+          type: string
+          example: "Morning Irrigation (Updated)"
+        description:
+          type: string
+          nullable: true
+          example: "Updated description"
+        frequency:
+          type: string
+          enum: ["once", "daily", "weekly", "monthly", "custom"]
+          example: "daily"
+        frequency_params:
+          type: object
+          additionalProperties: true
+          example: {"days": [1, 3, 5], "time": "06:00"}
+        start_date:
+          type: string
+          format: date
+          example: "2025-08-01"
+        end_date:
+          type: string
+          format: date
+          nullable: true
+          example: "2025-10-31"
+        start_time:
+          type: string
+          format: time
+          example: "06:00:00"
+        duration_minutes:
+          type: integer
+          example: 30
+        is_active:
+          type: boolean
+          example: true
+
     # Approval Request Schemas
     ApprovalRequest:
       type: object
@@ -253,6 +1034,1376 @@ components:
             $ref: '#/components/schemas/ValidationError'
 
 paths:
+  /status:
+    get:
+      tags:
+        - System
+      summary: Get system status
+      description: Returns the current status of the API and its dependencies
+      responses:
+        '200':
+          description: System status information
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "operational"
+                  version:
+                    type: string
+                    example: "1.0.0"
+                  timestamp:
+                    type: string
+                    format: date-time
+                    example: "2025-07-25T15:30:00Z"
+                  services:
+                    type: object
+                    properties:
+                      database:
+                        type: boolean
+                        example: true
+                      cache:
+                        type: boolean
+                        example: true
+                      storage:
+                        type: boolean
+                        example: true
+
+  /user:
+    get:
+      tags:
+        - User
+      summary: Get current user information
+      description: Returns information about the currently authenticated user
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: User information retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                    example: 1
+                  name:
+                    type: string
+                    example: "John Doe"
+                  email:
+                    type: string
+                    format: email
+                    example: "john.doe@example.com"
+                  role:
+                    type: string
+                    example: "admin"
+                  email_verified_at:
+                    type: string
+                    format: date-time
+                    nullable: true
+                    example: "2025-01-15T10:30:00Z"
+                  created_at:
+                    type: string
+                    format: date-time
+                  updated_at:
+                    type: string
+                    format: date-time
+        '401':
+          $ref: '#/components/responses/UnauthenticatedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+
+  /tanks:
+    get:
+      tags:
+        - Tanks
+      summary: List all tanks
+      description: Returns a paginated list of water tanks
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          description: Filter by tank status
+          schema:
+            type: string
+            enum: ["full", "filling", "draining", "maintenance"]
+        - name: is_active
+          in: query
+          description: Filter by active status
+          schema:
+            type: boolean
+        - name: per_page
+          in: query
+          description: Items per page
+          schema:
+            type: integer
+            default: 15
+      responses:
+        '200':
+          description: A paginated list of tanks
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Tank'
+                  links:
+                    $ref: '#/components/schemas/PaginationLinks'
+                  meta:
+                    $ref: '#/components/schemas/PaginationMeta'
+        '401':
+          $ref: '#/components/responses/UnauthenticatedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+
+    post:
+      tags:
+        - Tanks
+      summary: Create a new tank
+      description: Create a new water tank with the specified parameters
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StoreTank'
+      responses:
+        '201':
+          description: Tank created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tank'
+        '401':
+          $ref: '#/components/responses/UnauthenticatedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /tanks/{tank}:
+    parameters:
+      - name: tank
+        in: path
+        description: ID of the tank
+        required: true
+        schema:
+          type: integer
+    
+    get:
+      tags:
+        - Tanks
+      summary: Get tank by ID
+      description: Returns detailed information about a specific tank
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Tank details retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tank'
+        '401':
+          $ref: '#/components/responses/UnauthenticatedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+    
+    put:
+      tags:
+        - Tanks
+      summary: Update a tank
+      description: Update the specified tank's information
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateTank'
+      responses:
+        '200':
+          description: Tank updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tank'
+        '401':
+          $ref: '#/components/responses/UnauthenticatedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+    
+    delete:
+      tags:
+        - Tanks
+      summary: Delete a tank
+      description: Soft delete the specified tank
+      security:
+        - bearerAuth: []
+      responses:
+        '204':
+          description: Tank deleted successfully
+        '401':
+          $ref: '#/components/responses/UnauthenticatedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+  /plots:
+    get:
+      tags:
+        - Plots
+      summary: List all plots
+      description: Returns a paginated list of irrigation plots
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          description: Filter by plot status
+          schema:
+            type: string
+            enum: ["active", "inactive", "fallow", "under_maintenance"]
+        - name: has_crop
+          in: query
+          description: Filter by whether the plot has an active crop
+          schema:
+            type: boolean
+        - name: per_page
+          in: query
+          description: Items per page
+          schema:
+            type: integer
+            default: 15
+      responses:
+        '200':
+          description: A paginated list of plots
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Plot'
+                  links:
+                    $ref: '#/components/schemas/PaginationLinks'
+                  meta:
+                    $ref: '#/components/schemas/PaginationMeta'
+        '401':
+          $ref: '#/components/responses/UnauthenticatedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+
+    post:
+      tags:
+        - Plots
+      summary: Create a new plot
+      description: Create a new irrigation plot with the specified parameters
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StorePlot'
+      responses:
+        '201':
+          description: Plot created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Plot'
+        '401':
+          $ref: '#/components/responses/UnauthenticatedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /plots/{plot}:
+    parameters:
+      - name: plot
+        in: path
+        description: ID of the plot
+        required: true
+        schema:
+          type: integer
+    
+    get:
+      tags:
+        - Plots
+      summary: Get plot by ID
+      description: Returns detailed information about a specific plot
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Plot details retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Plot'
+        '401':
+          $ref: '#/components/responses/UnauthenticatedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+    
+    put:
+      tags:
+        - Plots
+      summary: Update a plot
+      description: Update the specified plot's information
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdatePlot'
+      responses:
+        '200':
+          description: Plot updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Plot'
+        '401':
+          $ref: '#/components/responses/UnauthenticatedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+    
+    delete:
+      tags:
+        - Plots
+      summary: Delete a plot
+      description: Soft delete the specified plot
+      security:
+        - bearerAuth: []
+      responses:
+        '204':
+          description: Plot deleted successfully
+        '401':
+          $ref: '#/components/responses/UnauthenticatedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+  /valves:
+    get:
+      tags:
+        - Valves
+      summary: List all valves
+      description: Returns a paginated list of irrigation valves
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: type
+          in: query
+          description: Filter by valve type
+          schema:
+            type: string
+            enum: ["tank", "plot", "zone"]
+        - name: status
+          in: query
+          description: Filter by valve status
+          schema:
+            type: string
+            enum: ["open", "closed", "error"]
+        - name: per_page
+          in: query
+          description: Items per page
+          schema:
+            type: integer
+            default: 15
+      responses:
+        '200':
+          description: A paginated list of valves
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Valve'
+                  links:
+                    $ref: '#/components/schemas/PaginationLinks'
+                  meta:
+                    $ref: '#/components/schemas/PaginationMeta'
+        '401':
+          $ref: '#/components/responses/UnauthenticatedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+
+    post:
+      tags:
+        - Valves
+      summary: Create a new valve
+      description: Create a new irrigation valve with the specified parameters
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StoreValve'
+      responses:
+        '201':
+          description: Valve created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Valve'
+        '401':
+          $ref: '#/components/responses/UnauthenticatedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /valves/{valve}:
+    parameters:
+      - name: valve
+        in: path
+        description: ID of the valve
+        required: true
+        schema:
+          type: integer
+    
+    get:
+      tags:
+        - Valves
+      summary: Get valve by ID
+      description: Returns detailed information about a specific valve
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Valve details retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Valve'
+        '401':
+          $ref: '#/components/responses/UnauthenticatedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+    
+    put:
+      tags:
+        - Valves
+      summary: Update a valve
+      description: Update the specified valve's information
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateValve'
+      responses:
+        '200':
+          description: Valve updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Valve'
+        '401':
+          $ref: '#/components/responses/UnauthenticatedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+    
+    delete:
+      tags:
+        - Valves
+      summary: Delete a valve
+      description: Soft delete the specified valve
+      security:
+        - bearerAuth: []
+      responses:
+        '204':
+          description: Valve deleted successfully
+        '401':
+          $ref: '#/components/responses/UnauthenticatedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+    
+    /open:
+      post:
+        tags:
+          - Valves
+        summary: Open a valve
+        description: Send a command to open the specified valve
+        security:
+          - bearerAuth: []
+        responses:
+          '200':
+            description: Valve opened successfully
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/Valve'
+          '401':
+            $ref: '#/components/responses/UnauthenticatedError'
+          '403':
+            $ref: '#/components/responses/ForbiddenError'
+          '404':
+            $ref: '#/components/responses/NotFoundError'
+    
+    /close:
+      post:
+        tags:
+          - Valves
+        summary: Close a valve
+        description: Send a command to close the specified valve
+        security:
+          - bearerAuth: []
+        responses:
+          '200':
+            description: Valve closed successfully
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/Valve'
+          '401':
+            $ref: '#/components/responses/UnauthenticatedError'
+          '403':
+            $ref: '#/components/responses/ForbiddenError'
+          '404':
+            $ref: '#/components/responses/NotFoundError'
+
+  /pumps:
+    get:
+      tags:
+        - Pumps
+      summary: List all pumps
+      description: Returns a paginated list of irrigation pumps
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          description: Filter by pump status
+          schema:
+            type: string
+            enum: ["stopped", "running", "paused", "error"]
+        - name: per_page
+          in: query
+          description: Items per page
+          schema:
+            type: integer
+            default: 15
+      responses:
+        '200':
+          description: A paginated list of pumps
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Pump'
+                  links:
+                    $ref: '#/components/schemas/PaginationLinks'
+                  meta:
+                    $ref: '#/components/schemas/PaginationMeta'
+        '401':
+          $ref: '#/components/responses/UnauthenticatedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+
+    post:
+      tags:
+        - Pumps
+      summary: Create a new pump
+      description: Create a new irrigation pump with the specified parameters
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StorePump'
+      responses:
+        '201':
+          description: Pump created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Pump'
+        '401':
+          $ref: '#/components/responses/UnauthenticatedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /pumps/{pump}:
+    parameters:
+      - name: pump
+        in: path
+        description: ID of the pump
+        required: true
+        schema:
+          type: integer
+    
+    get:
+      tags:
+        - Pumps
+      summary: Get pump by ID
+      description: Returns detailed information about a specific pump
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Pump details retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Pump'
+        '401':
+          $ref: '#/components/responses/UnauthenticatedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+    
+    put:
+      tags:
+        - Pumps
+      summary: Update a pump
+      description: Update the specified pump's information
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdatePump'
+      responses:
+        '200':
+          description: Pump updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Pump'
+        '401':
+          $ref: '#/components/responses/UnauthenticatedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+    
+    delete:
+      tags:
+        - Pumps
+      summary: Delete a pump
+      description: Soft delete the specified pump
+      security:
+        - bearerAuth: []
+      responses:
+        '204':
+          description: Pump deleted successfully
+        '401':
+          $ref: '#/components/responses/UnauthenticatedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+    
+    /start:
+      post:
+        tags:
+          - Pumps
+        summary: Start a pump
+        description: Send a command to start the specified pump
+        security:
+          - bearerAuth: []
+        responses:
+          '200':
+            description: Pump started successfully
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/Pump'
+          '401':
+            $ref: '#/components/responses/UnauthenticatedError'
+          '403':
+            $ref: '#/components/responses/ForbiddenError'
+          '404':
+            $ref: '#/components/responses/NotFoundError'
+    
+    /stop:
+      post:
+        tags:
+          - Pumps
+        summary: Stop a pump
+        description: Send a command to stop the specified pump
+        security:
+          - bearerAuth: []
+        responses:
+          '200':
+            description: Pump stopped successfully
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/Pump'
+          '401':
+            $ref: '#/components/responses/UnauthenticatedError'
+          '403':
+            $ref: '#/components/responses/ForbiddenError'
+          '404':
+            $ref: '#/components/responses/NotFoundError'
+    
+    /pause:
+      post:
+        tags:
+          - Pumps
+        summary: Pause a pump
+        description: Send a command to pause the specified pump
+        security:
+          - bearerAuth: []
+        responses:
+          '200':
+            description: Pump paused successfully
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/Pump'
+          '401':
+            $ref: '#/components/responses/UnauthenticatedError'
+          '403':
+            $ref: '#/components/responses/ForbiddenError'
+          '404':
+            $ref: '#/components/responses/NotFoundError'
+
+  /sensors:
+    get:
+      tags:
+        - Sensors
+      summary: List all sensors
+      description: Returns a paginated list of sensors
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: type
+          in: query
+          description: Filter by sensor type
+          schema:
+            type: string
+            enum: ["soil_moisture", "temperature", "humidity", "rainfall", "water_level", "flow", "pressure", "ph", "ec", "light"]
+        - name: location_type
+          in: query
+          description: Filter by location type
+          schema:
+            type: string
+            enum: ["tank", "plot", "valve", "pump", "environment"]
+        - name: is_active
+          in: query
+          description: Filter by active status
+          schema:
+            type: boolean
+        - name: per_page
+          in: query
+          description: Items per page
+          schema:
+            type: integer
+            default: 15
+      responses:
+        '200':
+          description: A paginated list of sensors
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Sensor'
+                  links:
+                    $ref: '#/components/schemas/PaginationLinks'
+                  meta:
+                    $ref: '#/components/schemas/PaginationMeta'
+        '401':
+          $ref: '#/components/responses/UnauthenticatedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+
+    post:
+      tags:
+        - Sensors
+      summary: Create a new sensor
+      description: Create a new sensor with the specified parameters
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StoreSensor'
+      responses:
+        '201':
+          description: Sensor created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Sensor'
+        '401':
+          $ref: '#/components/responses/UnauthenticatedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /sensors/{sensor}:
+    parameters:
+      - name: sensor
+        in: path
+        description: ID of the sensor
+        required: true
+        schema:
+          type: integer
+    
+    get:
+      tags:
+        - Sensors
+      summary: Get sensor by ID
+      description: Returns detailed information about a specific sensor
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Sensor details retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Sensor'
+        '401':
+          $ref: '#/components/responses/UnauthenticatedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+    
+    put:
+      tags:
+        - Sensors
+      summary: Update a sensor
+      description: Update the specified sensor's information
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateSensor'
+      responses:
+        '200':
+          description: Sensor updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Sensor'
+        '401':
+          $ref: '#/components/responses/UnauthenticatedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+    
+    delete:
+      tags:
+        - Sensors
+      summary: Delete a sensor
+      description: Soft delete the specified sensor
+      security:
+        - bearerAuth: []
+      responses:
+        '204':
+          description: Sensor deleted successfully
+        '401':
+          $ref: '#/components/responses/UnauthenticatedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+    
+    /readings:
+      get:
+        tags:
+          - Sensor Readings
+        summary: Get sensor readings
+        description: Returns a paginated list of readings for the specified sensor
+        security:
+          - bearerAuth: []
+        parameters:
+          - name: start_date
+            in: query
+            description: Filter readings after this date (ISO 8601 format)
+            schema:
+              type: string
+              format: date-time
+          - name: end_date
+            in: query
+            description: Filter readings before this date (ISO 8601 format)
+            schema:
+              type: string
+              format: date-time
+          - name: per_page
+            in: query
+            description: Items per page
+            schema:
+              type: integer
+              default: 15
+        responses:
+          '200':
+            description: A paginated list of sensor readings
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/SensorReading'
+                    links:
+                      $ref: '#/components/schemas/PaginationLinks'
+                    meta:
+                      $ref: '#/components/schemas/PaginationMeta'
+          '401':
+            $ref: '#/components/responses/UnauthenticatedError'
+          '403':
+            $ref: '#/components/responses/ForbiddenError'
+          '404':
+            $ref: '#/components/responses/NotFoundError'
+      
+      post:
+        tags:
+          - Sensor Readings
+        summary: Create a new sensor reading
+        description: Create a new reading for the specified sensor
+        security:
+          - bearerAuth: []
+        requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StoreSensorReading'
+        responses:
+          '201':
+            description: Sensor reading created successfully
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/SensorReading'
+          '401':
+            $ref: '#/components/responses/UnauthenticatedError'
+          '403':
+            $ref: '#/components/responses/ForbiddenError'
+          '404':
+            $ref: '#/components/responses/NotFoundError'
+          '422':
+            $ref: '#/components/responses/ValidationError'
+
+  /sensor-readings:
+    get:
+      tags:
+        - Sensor Readings
+      summary: List all sensor readings
+      description: Returns a paginated list of all sensor readings with optional filtering
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: sensor_id
+          in: query
+          description: Filter by sensor ID
+          schema:
+            type: integer
+        - name: sensor_type
+          in: query
+          description: Filter by sensor type
+          schema:
+            type: string
+            enum: ["soil_moisture", "temperature", "humidity", "rainfall", "water_level", "flow", "pressure", "ph", "ec", "light"]
+        - name: start_date
+          in: query
+          description: Filter readings after this date (ISO 8601 format)
+          schema:
+            type: string
+            format: date-time
+        - name: end_date
+          in: query
+          description: Filter readings before this date (ISO 8601 format)
+          schema:
+            type: string
+            format: date-time
+        - name: per_page
+          in: query
+          description: Items per page
+          schema:
+            type: integer
+            default: 15
+      responses:
+        '200':
+          description: A paginated list of sensor readings
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/SensorReading'
+                  links:
+                    $ref: '#/components/schemas/PaginationLinks'
+                  meta:
+                    $ref: '#/components/schemas/PaginationMeta'
+        '401':
+          $ref: '#/components/responses/UnauthenticatedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+
+  /sensor-readings/{reading}:
+    parameters:
+      - name: reading
+        in: path
+        description: ID of the sensor reading
+        required: true
+        schema:
+          type: integer
+    
+    get:
+      tags:
+        - Sensor Readings
+      summary: Get sensor reading by ID
+      description: Returns detailed information about a specific sensor reading
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Sensor reading retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SensorReading'
+        '401':
+          $ref: '#/components/responses/UnauthenticatedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+    
+    delete:
+      tags:
+        - Sensor Readings
+      summary: Delete a sensor reading
+      description: Delete the specified sensor reading
+      security:
+        - bearerAuth: []
+      responses:
+        '204':
+          description: Sensor reading deleted successfully
+        '401':
+          $ref: '#/components/responses/UnauthenticatedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+  /schedules:
+    get:
+      tags:
+        - Schedules
+      summary: List all schedules
+      description: Returns a paginated list of irrigation schedules
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: frequency
+          in: query
+          description: Filter by schedule frequency
+          schema:
+            type: string
+            enum: ["once", "daily", "weekly", "monthly", "custom"]
+        - name: is_active
+          in: query
+          description: Filter by active status
+          schema:
+            type: boolean
+        - name: start_date_from
+          in: query
+          description: Filter schedules starting after this date (ISO 8601 format)
+          schema:
+            type: string
+            format: date
+        - name: start_date_to
+          in: query
+          description: Filter schedules starting before this date (ISO 8601 format)
+          schema:
+            type: string
+            format: date
+        - name: per_page
+          in: query
+          description: Items per page
+          schema:
+            type: integer
+            default: 15
+      responses:
+        '200':
+          description: A paginated list of schedules
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Schedule'
+                  links:
+                    $ref: '#/components/schemas/PaginationLinks'
+                  meta:
+                    $ref: '#/components/schemas/PaginationMeta'
+        '401':
+          $ref: '#/components/responses/UnauthenticatedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+
+    post:
+      tags:
+        - Schedules
+      summary: Create a new schedule
+      description: Create a new irrigation schedule with the specified parameters
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StoreSchedule'
+      responses:
+        '201':
+          description: Schedule created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Schedule'
+        '401':
+          $ref: '#/components/responses/UnauthenticatedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /schedules/{schedule}:
+    parameters:
+      - name: schedule
+        in: path
+        description: ID of the schedule
+        required: true
+        schema:
+          type: integer
+    
+    get:
+      tags:
+        - Schedules
+      summary: Get schedule by ID
+      description: Returns detailed information about a specific schedule
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Schedule details retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Schedule'
+        '401':
+          $ref: '#/components/responses/UnauthenticatedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+    
+    put:
+      tags:
+        - Schedules
+      summary: Update a schedule
+      description: Update the specified schedule's information
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateSchedule'
+      responses:
+        '200':
+          description: Schedule updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Schedule'
+        '401':
+          $ref: '#/components/responses/UnauthenticatedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+    
+    delete:
+      tags:
+        - Schedules
+      summary: Delete a schedule
+      description: Delete the specified schedule
+      security:
+        - bearerAuth: []
+      responses:
+        '204':
+          description: Schedule deleted successfully
+        '401':
+          $ref: '#/components/responses/UnauthenticatedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+    
+    /activate:
+      post:
+        tags:
+          - Schedules
+        summary: Activate a schedule
+        description: Activate the specified schedule
+        security:
+          - bearerAuth: []
+        responses:
+          '200':
+            description: Schedule activated successfully
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/Schedule'
+          '401':
+            $ref: '#/components/responses/UnauthenticatedError'
+          '403':
+            $ref: '#/components/responses/ForbiddenError'
+          '404':
+            $ref: '#/components/responses/NotFoundError'
+    
+    /deactivate:
+      post:
+        tags:
+          - Schedules
+        summary: Deactivate a schedule
+        description: Deactivate the specified schedule
+        security:
+          - bearerAuth: []
+        responses:
+          '200':
+            description: Schedule deactivated successfully
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/Schedule'
+          '401':
+            $ref: '#/components/responses/UnauthenticatedError'
+          '403':
+            $ref: '#/components/responses/ForbiddenError'
+          '404':
+            $ref: '#/components/responses/NotFoundError'
+    
+    /run:
+      post:
+        tags:
+          - Schedules
+        summary: Run schedule now
+        description: Execute the specified schedule immediately
+        security:
+          - bearerAuth: []
+        responses:
+          '200':
+            description: Schedule executed successfully
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    message:
+                      type: string
+                      example: "Schedule executed successfully"
+                    execution_id:
+                      type: string
+                      example: "550e8400-e29b-41d4-a716-446655440000"
+          '400':
+            description: Schedule cannot be executed (e.g., already running, invalid state)
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/Error'
+          '401':
+            $ref: '#/components/responses/UnauthenticatedError'
+          '403':
+            $ref: '#/components/responses/ForbiddenError'
+          '404':
+            $ref: '#/components/responses/NotFoundError'
+
   /approval-requests:
     get:
       tags:
