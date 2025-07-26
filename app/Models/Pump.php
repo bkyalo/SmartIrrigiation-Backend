@@ -5,6 +5,8 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
+use Illuminate\Support\Carbon;
 
 class Pump extends Model
 {
@@ -15,14 +17,18 @@ class Pump extends Model
      *
      * @var array<int, string>
      */
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array<int, string>
+     */
     protected $fillable = [
         'name',
-        'status',
+        'external_device_id',
         'power_consumption',
         'flow_rate',
-        'total_runtime',
-        'last_maintenance',
         'error_code',
+        'notes',
     ];
 
     /**
@@ -35,10 +41,25 @@ class Pump extends Model
         'power_consumption' => 'decimal:2',
         'flow_rate' => 'decimal:2',
         'total_runtime' => 'integer',
-        'last_maintenance' => 'datetime',
         'deleted_at' => 'datetime',
+        'notes' => 'string',
     ];
 
+    /**
+     * The "booting" method of the model.
+     */
+    protected static function booted()
+    {
+        static::deleting(function ($pump) {
+            $pump->sessions()->delete();
+        });
+    }
+
+    /**
+     * The model's default values for attributes.
+     *
+     * @var array
+     */
     /**
      * The model's default values for attributes.
      *
@@ -49,7 +70,36 @@ class Pump extends Model
         'power_consumption' => 0,
         'flow_rate' => 0,
         'total_runtime' => 0,
+        'error_code' => null,
+        'notes' => null,
     ];
+    
+    /**
+     * The attributes that should be hidden for serialization.
+     *
+     * @var array<int, string>
+     */
+    protected $hidden = [
+        'created_at',
+        'updated_at',
+        'deleted_at',
+    ];
+
+    /**
+     * Get the pump sessions.
+     */
+    public function sessions(): HasMany
+    {
+        return $this->hasMany(PumpSession::class);
+    }
+
+    /**
+     * Get the current active session.
+     */
+    public function currentSession()
+    {
+        return $this->sessions()->running()->latest()->first();
+    }
 
     /**
      * Get the irrigation events for the pump.
@@ -66,9 +116,15 @@ class Pump extends Model
      */
     public function start(): bool
     {
-        if ($this->status === 'error') {
+        if ($this->status === 'error' || $this->status === 'running') {
             return false;
         }
+
+        // Create a new pump session
+        $this->sessions()->create([
+            'started_at' => now(),
+            'duration_seconds' => 0,
+        ]);
 
         $this->status = 'running';
         return $this->save();
@@ -81,8 +137,16 @@ class Pump extends Model
      */
     public function stop(): bool
     {
-        if ($this->status === 'error') {
+        if ($this->status !== 'running') {
             return false;
+        }
+
+        // End the current session
+        if ($session = $this->currentSession()) {
+            $session->stop();
+            
+            // Update total runtime
+            $this->total_runtime += $session->duration_seconds / 60; // Convert to minutes
         }
 
         $this->status = 'stopped';
@@ -166,13 +230,44 @@ class Pump extends Model
      */
     public function getRuntimeForHumans(): string
     {
-        $hours = floor($this->total_runtime / 60);
-        $minutes = $this->total_runtime % 60;
+        $totalMinutes = $this->getTotalRuntimeInMinutes();
+        $hours = floor($totalMinutes / 60);
+        $minutes = $totalMinutes % 60;
 
         if ($hours > 0) {
             return "{$hours}h {$minutes}m";
         }
 
         return "{$minutes}m";
+    }
+
+    /**
+     * Get the total runtime in minutes, including current session.
+     *
+     * @return int
+     */
+    public function getTotalRuntimeInMinutes(): int
+    {
+        $totalMinutes = $this->total_runtime;
+        
+        // Add current session time if pump is running
+        if ($this->status === 'running' && $session = $this->currentSession()) {
+            $currentSessionMinutes = now()->diffInMinutes($session->started_at);
+            $totalMinutes += $currentSessionMinutes;
+        }
+        
+        return (int) $totalMinutes;
+    }
+    
+    /**
+     * Get the total runtime in seconds for all completed sessions.
+     *
+     * @return int
+     */
+    public function getTotalRuntimeInSeconds(): int
+    {
+        return (int) $this->sessions()
+            ->whereNotNull('stopped_at')
+            ->sum('duration_seconds');
     }
 }

@@ -12,7 +12,18 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+        // Trust all proxies
+        $middleware->trustProxies('*');
+        
+        // Skip CSRF for API routes
+        $middleware->validateCsrfTokens(except: [
+            'api/*',
+        ]);
+        
+        // Add CORS middleware to the global middleware stack
+        $middleware->web(append: [
+            \Illuminate\Http\Middleware\HandleCors::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->renderable(function (\Throwable $e, $request) {

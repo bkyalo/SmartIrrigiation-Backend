@@ -25,16 +25,15 @@ class StorePlotRequest extends FormRequest
     {
         return [
             'name' => 'required|string|max:255|unique:plots,name',
-            'description' => 'nullable|string|max:1000',
-            'location' => 'nullable|string|max:255',
-            'area' => 'nullable|numeric|min:0',
-            'area_unit' => 'nullable|string|in:m²,ft²,acre,hectare',
+            'area' => 'nullable|numeric',
             'crop_type' => 'nullable|string|max:100',
-            'planting_date' => 'nullable|date',
             'soil_type' => 'nullable|string|max:100',
-            'optimal_moisture_min' => 'nullable|numeric|min:0|max:100|lt:optimal_moisture_max',
-            'optimal_moisture_max' => 'nullable|numeric|min:0|max:100|gt:optimal_moisture_min',
-            'irrigation_method' => 'nullable|string|in:drip,sprinkler,flood,manual',
+            'moisture_threshold' => 'nullable|numeric|min:0|max:100',
+            'irrigation_duration' => 'nullable|integer|min:1',
+            'status' => 'nullable|string|in:idle,irrigating,scheduled,error,active,fallow,maintenance',
+            'latitude' => 'nullable|numeric|between:-90,90',
+            'longitude' => 'nullable|numeric|between:-180,180',
+            'geometry' => 'nullable|array',
             'valve_ids' => 'nullable|array',
             'valve_ids.*' => [
                 'integer',
@@ -42,8 +41,6 @@ class StorePlotRequest extends FormRequest
                     $query->whereNull('deleted_at');
                 })
             ],
-            'status' => 'nullable|string|in:active,fallow,maintenance',
-            'metadata' => 'nullable|array',
         ];
     }
 

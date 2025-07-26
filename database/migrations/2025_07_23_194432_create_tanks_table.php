@@ -19,9 +19,9 @@ return new class extends Migration
             $table->decimal('latitude', 10, 8)->nullable();
             $table->decimal('longitude', 11, 8)->nullable();
             $table->boolean('is_active')->default(false);
-            $table->decimal('min_threshold', 10, 2);
-            $table->decimal('max_threshold', 10, 2);
-            $table->enum('status', ['filling', 'draining', 'standby', 'error'])->default('standby');
+            $table->decimal('min_threshold', 10, 2)->nullable();
+            $table->decimal('max_threshold', 10, 2)->nullable();
+            $table->enum('status', ['active', 'maintenance', 'inactive'])->default('active');
             $table->timestamp('last_maintenance')->nullable();
             $table->text('notes')->nullable();
             $table->timestamps();

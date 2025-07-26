@@ -43,7 +43,7 @@ class PlotResource extends JsonResource
             'status_display' => $this->getStatusName(),
             'current_moisture' => $this->when(
                 $this->relationLoaded('sensors'),
-                fn () => $this->getCurrentMoistureReading()
+                fn () => $this->latestMoistureReading()?->value
             ),
             'needs_irrigation' => $this->when(
                 $this->relationLoaded('sensors'),

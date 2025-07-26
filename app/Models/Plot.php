@@ -47,9 +47,9 @@ class Plot extends Model
     /**
      * Get the valves associated with the plot.
      */
-    public function valves(): HasMany
+    public function valves()
     {
-        return $this->hasMany(Valve::class);
+        return $this->belongsToMany(Valve::class);
     }
 
     /**
@@ -114,5 +114,40 @@ class Plot extends Model
             ->whereIn('status', ['scheduled', 'in_progress'])
             ->latest()
             ->limit(1);
+    }
+    
+    /**
+     * Get the display name for the irrigation method.
+     *
+     * @return string
+     */
+    public function getIrrigationMethodName(): string
+    {
+        return match($this->irrigation_method) {
+            'drip' => 'Drip Irrigation',
+            'sprinkler' => 'Sprinkler System',
+            'flood' => 'Flood Irrigation',
+            'manual' => 'Manual Watering',
+            default => ucfirst($this->irrigation_method ?? 'Not Specified'),
+        };
+    }
+    
+    /**
+     * Get the display name for the status.
+     *
+     * @return string
+     */
+    public function getStatusName(): string
+    {
+        return match($this->status) {
+            'idle' => 'Idle',
+            'irrigating' => 'Irrigating',
+            'scheduled' => 'Scheduled',
+            'error' => 'Error',
+            'active' => 'Active',
+            'fallow' => 'Fallow',
+            'maintenance' => 'Maintenance',
+            default => ucfirst($this->status ?? 'Unknown'),
+        };
     }
 }

@@ -15,6 +15,7 @@ class SensorReading extends Model
     protected $fillable = [
         'sensor_id',
         'value',
+        'water_level',
         'unit',
         'recorded_at',
         'metadata',
@@ -27,6 +28,7 @@ class SensorReading extends Model
      */
     protected $casts = [
         'value' => 'float',
+        'water_level' => 'float',
         'recorded_at' => 'datetime',
         'metadata' => 'array',
     ];

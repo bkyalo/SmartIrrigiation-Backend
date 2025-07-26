@@ -20,9 +20,31 @@ class TankController extends BaseController
     public function index(): JsonResponse
     {
         try {
+            // Log the start of the request
+            Log::info('Fetching all tanks');
+            
+            // Get tanks with relationships
             $tanks = Tank::with(['valves', 'sensors'])->get();
-            return $this->sendResponse(TankResource::collection($tanks), 'Tanks retrieved successfully.');
+            
+            // Log the number of tanks found
+            Log::info('Fetched ' . $tanks->count() . ' tanks');
+            
+            // Create the response
+            $response = $this->sendResponse(TankResource::collection($tanks), 'Tanks retrieved successfully.');
+            
+            // Log the response
+            Log::info('Tanks API response prepared', ['status' => 'success']);
+            
+            return $response;
         } catch (\Exception $e) {
+            // Log the full exception with stack trace
+            Log::error('Error in TankController@index', [
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
             return $this->handleException($e, 'Failed to retrieve tanks');
         }
     }

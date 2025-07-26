@@ -24,9 +24,24 @@ Route::get('/api/docs', '\L5Swagger\Http\Controllers\SwaggerController@docs')->n
 Route::get('/api/oauth2-callback', '\L5Swagger\Http\Controllers\SwaggerController@oauth2Callback')->name('l5swagger.oauth2_callback');
 
 // Dashboard Route (Requires authentication)
-Route::get('/dashboard', function () {
-    return view('dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\TankController;
+use App\Http\Controllers\PumpController;
+
+Route::get('/dashboard', [DashboardController::class, 'index'])
+    ->middleware(['auth', 'verified'])
+    ->name('dashboard');
+
+// Resource Routes (Requires authentication)
+Route::middleware(['auth', 'verified'])->group(function () {
+    // Tank Management
+    Route::resource('tanks', TankController::class)->except(['show']);
+    Route::get('tanks/{tank}', [TankController::class, 'show'])->name('tanks.show');
+    
+    // Pump Management
+    Route::resource('pumps', PumpController::class);
+    Route::patch('pumps/{pump}/toggle-status', [PumpController::class, 'toggleStatus'])->name('pumps.toggle-status');
+});
 
 // Profile Routes (Require authentication)
 Route::middleware('auth')->group(function () {

@@ -59,6 +59,13 @@ class PlotController extends BaseController
             );
         } catch (\Exception $e) {
             DB::rollBack();
+            \Log::error('Failed to create plot', [
+                'error' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString(),
+                'request' => $request->all()
+            ]);
             return $this->handleException($e, 'Failed to create plot');
         }
     }

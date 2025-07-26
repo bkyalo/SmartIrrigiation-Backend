@@ -14,10 +14,10 @@ return new class extends Migration
         Schema::create('plots', function (Blueprint $table) {
             $table->id();
             $table->string('name');
-            $table->decimal('area', 10, 2); // in square meters
-            $table->string('crop_type');
-            $table->string('soil_type');
-            $table->decimal('moisture_threshold', 5, 2);
+            $table->decimal('area', 10, 2)->nullable(); // in square meters
+            $table->string('crop_type')->nullable();
+            $table->string('soil_type')->nullable();
+            $table->decimal('moisture_threshold', 5, 2)->nullable();
             $table->integer('irrigation_duration')->default(30); // in minutes
             $table->enum('status', ['idle', 'irrigating', 'scheduled', 'error'])->default('idle');
             $table->decimal('latitude', 10, 8)->nullable();
