@@ -3,6 +3,9 @@
 namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Database\Eloquent\Relations\Relation;
+use App\Models\Plot;
+use App\Models\Tank;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -19,6 +22,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        // Define the morph map for polymorphic relationships
+        Relation::morphMap([
+            'tank' => Tank::class,
+            'plot' => Plot::class,
+        ]);
     }
 }

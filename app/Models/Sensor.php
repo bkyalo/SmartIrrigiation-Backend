@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
+use App\Models\Plot;
+use App\Models\Tank;
 
 class Sensor extends Model
 {
@@ -38,6 +40,7 @@ class Sensor extends Model
      */
     protected $fillable = [
         'name',
+        'external_device_id',
         'type',
         'location_type',
         'location_id',
@@ -75,7 +78,26 @@ class Sensor extends Model
      */
     public function location(): MorphTo
     {
-        return $this->morphTo();
+        // Use a simpler morphTo without the type map
+        return $this->morphTo('location', 'location_type', 'location_id');
+    }
+    
+    /**
+     * Get the location type in the correct case.
+     */
+    public function getLocationTypeAttribute($value)
+    {
+        // Ensure the type is in lowercase to match the morph map
+        return strtolower($value);
+    }
+    
+    /**
+     * Set the location type in the correct case.
+     */
+    public function setLocationTypeAttribute($value)
+    {
+        // Ensure the type is in lowercase to match the morph map
+        $this->attributes['location_type'] = strtolower($value);
     }
 
     /**

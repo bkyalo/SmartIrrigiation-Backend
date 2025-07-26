@@ -170,7 +170,7 @@
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#sensors">
+                        <a class="nav-link {{ request()->routeIs('sensors.*') ? 'active' : '' }}" href="{{ route('sensors.index') }}">
                             <i class="bi bi-hdd-rack"></i>
                             Sensors
                         </a>

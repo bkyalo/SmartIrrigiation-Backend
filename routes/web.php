@@ -41,6 +41,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Pump Management
     Route::resource('pumps', PumpController::class);
     Route::patch('pumps/{pump}/toggle-status', [PumpController::class, 'toggleStatus'])->name('pumps.toggle-status');
+    
+    // Sensor Management
+    Route::resource('sensors', \App\Http\Controllers\SensorController::class);
 });
 
 // Profile Routes (Require authentication)

@@ -141,41 +141,103 @@
         <div class="col-12 col-xl-4">
             <!-- Quick Stats -->
             <div class="card mb-4">
-                <div class="card-header">
-                    <h5 class="mb-0">Quick Stats</h5>
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Pump Analytics</h5>
+                    <span class="badge bg-{{ $statusClass[0] }}-subtle text-{{ $statusClass[0] }}">
+                        <i class="bi bi-{{ $statusClass[1] }} me-1"></i>
+                        {{ ucfirst($pump->status) }}
+                    </span>
                 </div>
-                <div class="card-body">
-                    <div class="row g-3">
-                        <div class="col-6">
-                            <div class="card pump-stats-card bg-light">
-                                <div class="card-body text-center">
-                                    <div class="avatar-sm bg-{{ $statusClass[0] }}-subtle text-{{ $statusClass[0] }} rounded-circle mx-auto mb-2">
-                                        <i class="bi bi-{{ $statusClass[1] }} fs-4"></i>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush">
+                        <!-- Flow Rate -->
+                        <div class="list-group-item">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="d-flex align-items-center">
+                                    <div class="avatar-sm bg-primary-subtle text-primary rounded-circle me-3 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                        <i class="bi bi-speedometer2 fs-5"></i>
                                     </div>
-                                    <h4 class="mb-0">{{ ucfirst($pump->status) }}</h4>
-                                    <p class="text-muted small mb-0">Status</p>
+                                    <div>
+                                        <h6 class="mb-0">Flow Rate</h6>
+                                        <small class="text-muted">Current pump flow rate</small>
+                                    </div>
+                                </div>
+                                <div class="text-end">
+                                    <div class="fw-bold">{{ number_format($pump->flow_rate, 1) }} <small class="text-muted">L/min</small></div>
+                                    <div class="text-{{ $pump->flow_rate > 0 ? 'success' : 'muted' }} small">
+                                        <i class="bi bi-arrow-{{ $pump->flow_rate > 0 ? 'up' : 'right' }}"></i>
+                                        {{ $pump->flow_rate > 0 ? 'Active' : 'Idle' }}
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                        <div class="col-6">
-                            <div class="card pump-stats-card bg-light">
-                                <div class="card-body text-center">
-                                    <div class="avatar-sm bg-primary-subtle text-primary rounded-circle mx-auto mb-2">
-                                        <i class="bi bi-speedometer2 fs-4"></i>
+
+                        <!-- Power Consumption -->
+                        <div class="list-group-item">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="d-flex align-items-center">
+                                    <div class="avatar-sm bg-warning-subtle text-warning rounded-circle me-3 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                        <i class="bi bi-lightning-charge fs-5"></i>
                                     </div>
-                                    <h4 class="mb-0">{{ $pump->flow_rate }}</h4>
-                                    <p class="text-muted small mb-0">L/min</p>
+                                    <div>
+                                        <h6 class="mb-0">Power Usage</h6>
+                                        <small class="text-muted">Current consumption</small>
+                                    </div>
+                                </div>
+                                <div class="text-end">
+                                    <div class="fw-bold">{{ number_format($pump->power_consumption, 1) }} <small class="text-muted">W</small></div>
+                                    <div class="small">{{ number_format(($pump->power_consumption * 24) / 1000, 1) }} kWh/day</div>
                                 </div>
                             </div>
                         </div>
-                        <div class="col-6">
-                            <div class="card pump-stats-card bg-light">
-                                <div class="card-body text-center">
-                                    <div class="avatar-sm bg-info-subtle text-info rounded-circle mx-auto mb-2">
-                                        <i class="bi bi-clock-history fs-4"></i>
+
+                        <!-- Today's Runtime -->
+                        <div class="list-group-item">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="d-flex align-items-center">
+                                    <div class="avatar-sm bg-info-subtle text-info rounded-circle me-3 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                        <i class="bi bi-clock-history fs-5"></i>
                                     </div>
-                                    <h4 class="mb-0">{{ floor($todayRuntime / 60) }}<small class="fs-6">h</small> {{ $todayRuntime % 60 }}<small class="fs-6">m</small></h4>
-                                    <p class="text-muted small mb-0">Today's Runtime</p>
+                                    <div>
+                                        <h6 class="mb-0">Today's Runtime</h6>
+                                        <small class="text-muted">Total active time today</small>
+                                    </div>
+                                </div>
+                                <div class="text-end">
+                                    <div class="fw-bold">
+                                        {{ floor($todayRuntime / 60) }}<small class="text-muted">h</small> 
+                                        {{ $todayRuntime % 60 }}<small class="text-muted">m</small>
+                                    </div>
+                                    @if($pump->status === 'running' && $pump->currentSession())
+                                        <div class="text-success small">
+                                            <i class="bi bi-arrow-repeat me-1"></i>
+                                            Running ({{ now()->diffInMinutes($pump->currentSession()->started_at) }}m)
+                                        </div>
+                                    @endif
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Total Runtime -->
+                        <div class="list-group-item">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="d-flex align-items-center">
+                                    <div class="avatar-sm bg-success-subtle text-success rounded-circle me-3 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                        <i class="bi bi-hourglass-split fs-5"></i>
+                                    </div>
+                                    <div>
+                                        <h6 class="mb-0">Total Runtime</h6>
+                                        <small class="text-muted">Lifetime operation</small>
+                                    </div>
+                                </div>
+                                <div class="text-end">
+                                    <div class="fw-bold">
+                                        {{ floor($totalRuntime / 60) }}<small class="text-muted">h</small> 
+                                        {{ $totalRuntime % 60 }}<small class="text-muted">m</small>
+                                    </div>
+                                    <div class="small text-muted">
+                                        {{ $pump->sessions->count() }} session{{ $pump->sessions->count() != 1 ? 's' : '' }}
+                                    </div>
                                 </div>
                             </div>
                         </div>

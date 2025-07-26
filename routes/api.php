@@ -42,6 +42,10 @@ Route::prefix('v1')->group(function () {
     Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])
         ->middleware('auth:sanctum');
     
+    // Public routes
+    Route::apiResource('tanks', TankController::class)->only(['index', 'show']);
+    Route::apiResource('plots', PlotController::class)->only(['index', 'show']);
+    
     // Protected routes (require authentication)
     Route::middleware(['auth:sanctum'])->group(function () {
         // Current authenticated user
@@ -49,11 +53,11 @@ Route::prefix('v1')->group(function () {
             return $request->user();
         });
         
-        // Tank routes
-        Route::apiResource('tanks', TankController::class);
+        // Protected Tank routes
+        Route::apiResource('tanks', TankController::class)->except(['index', 'show']);
         
-        // Plot routes
-        Route::apiResource('plots', PlotController::class);
+        // Protected Plot routes
+        Route::apiResource('plots', PlotController::class)->except(['index', 'show']);
         
         // Valve routes
         Route::apiResource('valves', ValveController::class);
