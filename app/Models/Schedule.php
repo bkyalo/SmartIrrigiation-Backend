@@ -215,17 +215,17 @@ class Schedule extends Model
                         $nextRun->setTimeFromTimeString($this->start_time->format('H:i:s'));
                         if ($nextRun->isPast()) {
                             // If the time has passed, move to the next scheduled day
-                            $nextDayIndex = ($currentDayIndex + 1) % count($days);
-                            $daysToAdd = $nextDayIndex > $currentDayIndex 
+                            $nextDayIndex = (int)(($currentDayIndex + 1) % count($days));
+                            $daysToAdd = (int)($nextDayIndex > $currentDayIndex 
                                 ? $nextDayIndex - $currentDayIndex 
-                                : 7 - ($currentDayIndex - $nextDayIndex);
+                                : 7 - ($currentDayIndex - $nextDayIndex));
                             $nextRun->addDays($daysToAdd);
                         }
                     } else {
                         // Find the next scheduled day
                         $nextDay = null;
                         foreach ($days as $day) {
-                            $dayIndex = array_search($day, [
+                            $dayIndex = (int)array_search($day, [
                                 'sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'
                             ]);
                             $nextDayOfWeek = $nextRun->copy()->next($dayIndex);
@@ -242,11 +242,11 @@ class Schedule extends Model
             case self::FREQUENCY_MONTHLY:
                 $days = $this->frequency_params['days'] ?? [1];
                 $nextRun->addMonth();
-                $nextRun->day = $days[0];
+                $nextRun->day = (int)$days[0];
                 break;
 
             case self::FREQUENCY_CUSTOM:
-                $interval = $this->frequency_params['interval'] ?? 1;
+                $interval = (int)($this->frequency_params['interval'] ?? 1);
                 $unit = $this->frequency_params['unit'] ?? 'days';
                 $nextRun->add($interval, $unit);
                 break;

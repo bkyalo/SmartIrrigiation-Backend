@@ -234,6 +234,50 @@
                 </div>
             </div>
 
+            <!-- Ongoing Irrigation -->
+            <div class="card mb-4" id="ongoingIrrigationCard" style="display: none;">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-droplet-fill text-primary"></i> Ongoing Irrigation
+                    </h5>
+                    <span class="badge bg-warning">In Progress</span>
+                </div>
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-center">
+                                <div class="flex-shrink-0 me-3">
+                                    <i class="bi bi-clock-history fs-2 text-primary"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-0">Time Elapsed</h6>
+                                    <p class="mb-0" id="irrigationElapsedTime">00:00:00</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-center">
+                                <div class="flex-shrink-0 me-3">
+                                    <i class="bi bi-hourglass-split fs-2 text-primary"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-0">Time Remaining</h6>
+                                    <p class="mb-0" id="irrigationRemainingTime">Calculating...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-4 d-flex justify-content-between">
+                        <button class="btn btn-outline-secondary" id="pauseIrrigationBtn" onclick="pauseIrrigation()">
+                            <i class="bi bi-pause-fill"></i> Pause
+                        </button>
+                        <button class="btn btn-danger" onclick="stopIrrigation()">
+                            <i class="bi bi-stop-fill"></i> Stop Irrigation
+                        </button>
+                    </div>
+                </div>
+            </div>
+
             <!-- Upcoming Irrigation Events -->
             <div class="card mb-4">
                 <div class="card-header d-flex justify-content-between align-items-center">
@@ -654,6 +698,237 @@ function showAlert(type, message) {
     }, 5000);
 }
 
+// Global variables for ongoing irrigation tracking
+let irrigationTimer;
+let startTime;
+let pausedTime = 0;
+let isPaused = false;
+let totalDuration = 0;
+
+// Format time in seconds to HH:MM:SS
+function formatTime(seconds) {
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    const s = Math.floor(seconds % 60);
+    return [
+        h.toString().padStart(2, '0'),
+        m.toString().padStart(2, '0'),
+        s.toString().padStart(2, '0')
+    ].join(':');
+}
+
+// Update the ongoing irrigation timer display
+function updateIrrigationTimer() {
+    if (isPaused) return;
+    
+    const now = new Date().getTime();
+    const elapsed = Math.floor((now - startTime) / 1000) + pausedTime;
+    const remaining = Math.max(0, totalDuration - elapsed);
+    
+    document.getElementById('irrigationElapsedTime').textContent = formatTime(elapsed);
+    document.getElementById('irrigationRemainingTime').textContent = formatTime(remaining);
+    
+    if (elapsed >= totalDuration) {
+        stopIrrigationTimer();
+        // Refresh the page to update the UI
+        window.location.reload();
+    }
+}
+
+// Start the irrigation timer
+function startIrrigationTimer(durationMinutes) {
+    totalDuration = durationMinutes * 60; // Convert to seconds
+    startTime = new Date().getTime();
+    pausedTime = 0;
+    isPaused = false;
+    
+    // Show the ongoing irrigation card
+    document.getElementById('ongoingIrrigationCard').style.display = 'block';
+    
+    // Start the timer
+    updateIrrigationTimer();
+    irrigationTimer = setInterval(updateIrrigationTimer, 1000);
+}
+
+// Stop the irrigation timer
+function stopIrrigationTimer() {
+    clearInterval(irrigationTimer);
+    document.getElementById('ongoingIrrigationCard').style.display = 'none';
+}
+
+// Pause the ongoing irrigation
+async function pauseIrrigation() {
+    if (isPaused) return;
+    
+    try {
+        // Show loading state
+        const pauseBtn = document.getElementById('pauseIrrigationBtn');
+        const originalText = pauseBtn.innerHTML;
+        pauseBtn.disabled = true;
+        pauseBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Pausing...';
+        
+        // Call the API to pause irrigation
+        const response = await fetch(`/api/v1/irrigation/plots/{{ $plot->id }}/pause`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': csrfToken,
+                'Accept': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            isPaused = true;
+            clearInterval(irrigationTimer);
+            pausedTime = Math.floor((new Date().getTime() - startTime) / 1000);
+            pauseBtn.innerHTML = '<i class="bi bi-play-fill"></i> Resume';
+            pauseBtn.onclick = resumeIrrigation;
+            showToast('success', 'Irrigation paused');
+        } else {
+            throw new Error(data.message || 'Failed to pause irrigation');
+        }
+    } catch (error) {
+        console.error('Error pausing irrigation:', error);
+        showToast('error', error.message || 'Failed to pause irrigation');
+    } finally {
+        pauseBtn.disabled = false;
+    }
+}
+
+// Resume the paused irrigation
+async function resumeIrrigation() {
+    if (!isPaused) return;
+    
+    try {
+        // Show loading state
+        const resumeBtn = document.getElementById('pauseIrrigationBtn');
+        const originalText = resumeBtn.innerHTML;
+        resumeBtn.disabled = true;
+        resumeBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Resuming...';
+        
+        // Call the API to resume irrigation
+        const response = await fetch(`/api/v1/irrigation/plots/{{ $plot->id }}/resume`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': csrfToken,
+                'Accept': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            isPaused = false;
+            startTime = new Date().getTime() - (pausedTime * 1000);
+            irrigationTimer = setInterval(updateIrrigationTimer, 1000);
+            resumeBtn.innerHTML = '<i class="bi bi-pause-fill"></i> Pause';
+            resumeBtn.onclick = pauseIrrigation;
+            showToast('success', 'Irrigation resumed');
+        } else {
+            throw new Error(data.message || 'Failed to resume irrigation');
+        }
+    } catch (error) {
+        console.error('Error resuming irrigation:', error);
+        showToast('error', error.message || 'Failed to resume irrigation');
+    } finally {
+        resumeBtn.disabled = false;
+    }
+}
+
+// Stop the ongoing irrigation
+async function stopIrrigation() {
+    if (!confirm('Are you sure you want to stop the ongoing irrigation?')) {
+        return;
+    }
+    
+    try {
+        // Show loading state
+        const stopBtn = document.querySelector('button[onclick="stopIrrigation()"]');
+        const originalText = stopBtn.innerHTML;
+        stopBtn.disabled = true;
+        stopBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Stopping...';
+        
+        // Call the API to stop irrigation
+        const response = await fetch(`/api/v1/irrigation/plots/{{ $plot->id }}/stop`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': csrfToken,
+                'Accept': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            stopIrrigationTimer();
+            showToast('success', 'Irrigation stopped successfully');
+            // Refresh the page to update the UI
+            window.location.reload();
+        } else {
+            throw new Error(data.message || 'Failed to stop irrigation');
+        }
+    } catch (error) {
+        console.error('Error stopping irrigation:', error);
+        showToast('error', error.message || 'Failed to stop irrigation');
+        if (stopBtn) {
+            stopBtn.disabled = false;
+            stopBtn.innerHTML = originalText;
+        }
+    }
+}
+
+// Check for ongoing irrigation on page load
+async function checkForOngoingIrrigation() {
+    try {
+        const response = await fetch(`/api/v1/irrigation/plots/{{ $plot->id }}/status`, {
+            headers: {
+                'Accept': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (data.success && data.data && data.data.is_irrigating) {
+            const event = data.data.current_event;
+            const elapsed = Math.floor((new Date() - new Date(event.started_at)) / 1000);
+            const remaining = Math.max(0, (event.duration_minutes * 60) - elapsed);
+            
+            // Update the UI to show ongoing irrigation
+            document.getElementById('ongoingIrrigationCard').style.display = 'block';
+            document.getElementById('irrigationElapsedTime').textContent = formatTime(elapsed);
+            document.getElementById('irrigationRemainingTime').textContent = formatTime(remaining);
+            
+            // Start the timer
+            totalDuration = event.duration_minutes * 60;
+            startTime = new Date().getTime() - (elapsed * 1000);
+            irrigationTimer = setInterval(updateIrrigationTimer, 1000);
+            
+            // Update pause/resume button state
+            const pauseBtn = document.getElementById('pauseIrrigationBtn');
+            if (event.is_paused) {
+                isPaused = true;
+                clearInterval(irrigationTimer);
+                pausedTime = elapsed;
+                pauseBtn.innerHTML = '<i class="bi bi-play-fill"></i> Resume';
+                pauseBtn.onclick = resumeIrrigation;
+            } else {
+                pauseBtn.innerHTML = '<i class="bi bi-pause-fill"></i> Pause';
+                pauseBtn.onclick = pauseIrrigation;
+            }
+        }
+    } catch (error) {
+        console.error('Error checking ongoing irrigation:', error);
+    }
+}
+
 // Initialize the page
 document.addEventListener('DOMContentLoaded', function() {
     // Set default datetime input to now + 1 hour
@@ -667,11 +942,17 @@ document.addEventListener('DOMContentLoaded', function() {
         dateTimeInput.value = now.toISOString().slice(0, 16);
     }
     
+    // Check for ongoing irrigation and update UI
+    checkForOngoingIrrigation();
+    
     // Load upcoming irrigation events
     refreshIrrigationEvents();
     
-    // Refresh events every 30 seconds
-    setInterval(refreshIrrigationEvents, 30000);
+    // Refresh events and irrigation status every 30 seconds
+    setInterval(() => {
+        refreshIrrigationEvents();
+        checkForOngoingIrrigation();
+    }, 30000);
 });
 </script>
 @endpush

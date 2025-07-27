@@ -92,6 +92,110 @@ class IrrigationEvent extends Model
         'end_time',
         'deleted_at',
     ];
+    
+    /**
+     * Calculate the next occurrence for a recurring event.
+     *
+     * @return \Carbon\Carbon
+     */
+    public function calculateNextOccurrence()
+    {
+        if (!$this->is_recurring || !$this->recurrence_rule) {
+            return null;
+        }
+        
+        $lastRun = $this->last_run ?: now();
+        $nextRun = clone $lastRun;
+        
+        // Parse the recurrence rule (simple implementation)
+        $rule = json_decode($this->recurrence_rule, true) ?? [];
+        $frequency = $rule['frequency'] ?? 'daily';
+        $interval = (int)($rule['interval'] ?? 1);
+        
+        // Calculate next occurrence based on frequency
+        switch (strtolower($frequency)) {
+            case 'daily':
+                $nextRun->addDays($interval);
+                break;
+                
+            case 'weekly':
+                $days = $rule['days'] ?? [strtolower($nextRun->englishDayOfWeek)];
+                $currentDay = strtolower($nextRun->englishDayOfWeek);
+                $currentDayIndex = array_search($currentDay, $days);
+                
+                if ($currentDayIndex !== false) {
+                    // Move to the next scheduled day in the week
+                    $nextDayIndex = ($currentDayIndex + 1) % count($days);
+                    $nextDay = $days[$nextDayIndex];
+                    $nextRun->next(ucfirst($nextDay));
+                } else {
+                    // If current day is not in the schedule, find the next scheduled day
+                    $nextScheduledDay = null;
+                    foreach ($days as $day) {
+                        $dayDate = (clone $nextRun)->next(ucfirst($day));
+                        if (!$nextScheduledDay || $dayDate->lt($nextScheduledDay)) {
+                            $nextScheduledDay = $dayDate;
+                        }
+                    }
+                    $nextRun = $nextScheduledDay ?: $nextRun->addWeek();
+                }
+                
+                // If we've moved to the next week, apply the interval
+                $weeksToAdd = floor(($interval - 1) / count($days));
+                if ($weeksToAdd > 0) {
+                    $nextRun->addWeeks($weeksToAdd);
+                }
+                break;
+                
+            case 'monthly':
+                $days = $rule['days'] ?? [$nextRun->day];
+                $currentDay = $nextRun->day;
+                
+                // Find the next scheduled day in this month or next
+                $nextScheduledDay = null;
+                foreach ($days as $day) {
+                    $day = (int)$day;
+                    $testDate = (clone $nextRun)->day($day);
+                    
+                    // If this day is in the future, consider it
+                    if ($testDate->gt($nextRun)) {
+                        if (!$nextScheduledDay || $testDate->lt($nextScheduledDay)) {
+                            $nextScheduledDay = $testDate;
+                        }
+                    }
+                }
+                
+                if ($nextScheduledDay) {
+                    $nextRun = $nextScheduledDay;
+                } else {
+                    // Move to the first day of next month's schedule
+                    $nextRun->addMonthNoOverflow();
+                    $nextRun->day(1);
+                    
+                    // Find the first scheduled day in the next month
+                    $firstDay = min($days);
+                    $nextRun->day($firstDay);
+                }
+                
+                // Apply interval (in months)
+                if ($interval > 1) {
+                    $monthsToAdd = $interval - 1;
+                    $nextRun->addMonthsNoOverflow($monthsToAdd);
+                }
+                break;
+                
+            default:
+                // Default to daily if frequency is not recognized
+                $nextRun->addDay();
+        }
+        
+        // Make sure we don't go past the end date
+        if ($this->recurrence_end_date && $nextRun->gt($this->recurrence_end_date)) {
+            return null;
+        }
+        
+        return $nextRun;
+    }
 
     /**
      * Get the plot that the irrigation event belongs to.

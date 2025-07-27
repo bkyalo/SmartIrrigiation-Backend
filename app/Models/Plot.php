@@ -156,40 +156,65 @@ class Plot extends Model
             throw new \Exception('No valve assigned to this plot');
         }
         
-        if ($this->hasActiveIrrigation()) {
-            throw new \Exception('Another irrigation event is already in progress for this plot');
-        }
-        
-        $duration = $durationMinutes ?? $this->irrigation_duration;
+        $duration = (int)($durationMinutes ?? $this->irrigation_duration);
         $startTime = now();
         
+        // Check for overlapping events (including currently running ones)
         if ($this->hasOverlappingIrrigation($startTime, $duration)) {
             throw new \Exception('There is an overlapping irrigation event scheduled for this time period');
         }
         
-        // Create a new irrigation event
-        $event = new IrrigationEvent([
-            'plot_id' => $this->id,
-            'valve_id' => $this->valve->id,
-            'initiated_by' => $userId,
-            'start_time' => $startTime,
-            'end_time' => (clone $startTime)->addMinutes($duration),
-            'duration_minutes' => $duration,
-            'status' => IrrigationEvent::STATUS_IN_PROGRESS,
-            'trigger_type' => IrrigationEvent::TRIGGER_MANUAL,
-        ]);
-        
-        if ($event->save()) {
-            // Open the valve
-            $this->valve->open();
+        try {
+            // Start a database transaction to ensure data consistency
+            return \DB::transaction(function () use ($userId, $duration, $startTime) {
+                // Open the valve using the correct method
+                if (!$this->valve->openValve('irrigation', $userId, 'Manual irrigation started')) {
+                    throw new \Exception('Failed to open valve');
+                }
+                
+                // Create a new irrigation event
+                $event = new IrrigationEvent([
+                    'plot_id' => $this->id,
+                    'valve_id' => $this->valve->id,
+                    'initiated_by' => $userId,
+                    'start_time' => $startTime,
+                    'end_time' => (clone $startTime)->addMinutes($duration),
+                    'duration_minutes' => $duration,
+                    'status' => IrrigationEvent::STATUS_IN_PROGRESS,
+                    'trigger_type' => IrrigationEvent::TRIGGER_MANUAL,
+                ]);
+                
+                if (!$event->save()) {
+                    throw new \Exception('Failed to save irrigation event');
+                }
+                
+                // Schedule the valve to close after the specified duration
+                $event->closeAfterDuration();
+                
+                // Update plot status if needed
+                $this->status = 'irrigating';
+                $this->save();
+                
+                return $event;
+            });
+        } catch (\Exception $e) {
+            // Log the error
+            \Log::error('Failed to start manual irrigation', [
+                'plot_id' => $this->id,
+                'user_id' => $userId,
+                'duration' => $duration,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
             
-            // Schedule the valve to close after the specified duration
-            $event->closeAfterDuration();
+            // Make sure to close the valve if it was opened
+            if (isset($event) && $event->valve && $event->valve->is_open) {
+                $event->valve->closeValve('irrigation', $userId, 'Error during irrigation: ' . $e->getMessage());
+            }
             
-            return $event;
+            // Re-throw the exception
+            throw $e;
         }
-        
-        throw new \Exception('Failed to start irrigation');
     }
     
     /**
@@ -216,31 +241,55 @@ class Plot extends Model
             throw new \Exception('There is an overlapping irrigation event scheduled for this time period');
         }
         
-        // If this is a future event, also check if there will be an active irrigation at that time
-        if ($startTime > now() && $this->hasActiveIrrigation()) {
-            throw new \Exception('Cannot schedule irrigation while another event is in progress');
-        }
-        
-        $event = new IrrigationEvent([
-            'plot_id' => $this->id,
-            'valve_id' => $this->valve->id,
-            'initiated_by' => $userId,
-            'start_time' => $startTime,
-            'end_time' => $endTime,
-            'duration_minutes' => $duration,
-            'status' => IrrigationEvent::STATUS_SCHEDULED,
-            'trigger_type' => IrrigationEvent::TRIGGER_SCHEDULE,
-        ]);
-        
-        if ($event->save()) {
-            // Schedule the job to handle the irrigation at the specified time
-            ProcessScheduledIrrigation::dispatch($event)
-                ->delay($startTime);
+        try {
+            // Start a database transaction to ensure data consistency
+            return \DB::transaction(function () use ($startTime, $userId, $duration, $endTime) {
+                // Create the irrigation event
+                $event = new IrrigationEvent([
+                    'plot_id' => $this->id,
+                    'valve_id' => $this->valve->id,
+                    'initiated_by' => $userId,
+                    'start_time' => $startTime,
+                    'end_time' => $endTime,
+                    'duration_minutes' => $duration,
+                    'status' => IrrigationEvent::STATUS_SCHEDULED,
+                    'trigger_type' => IrrigationEvent::TRIGGER_SCHEDULE,
+                ]);
                 
-            return $event;
+                if (!$event->save()) {
+                    throw new \Exception('Failed to save irrigation event');
+                }
+                
+                // Schedule the job to handle the irrigation at the specified time
+                ProcessScheduledIrrigation::dispatch($event)
+                    ->delay($startTime);
+                
+                // Log the scheduling
+                \Log::info('Scheduled one-time irrigation event', [
+                    'plot_id' => $this->id,
+                    'valve_id' => $this->valve->id,
+                    'event_id' => $event->id,
+                    'start_time' => $startTime->toDateTimeString(),
+                    'duration' => $duration,
+                    'scheduled_by' => $userId
+                ]);
+                
+                return $event;
+            });
+        } catch (\Exception $e) {
+            // Log the error
+            \Log::error('Failed to schedule one-time irrigation', [
+                'plot_id' => $this->id,
+                'user_id' => $userId,
+                'start_time' => $startTime->toDateTimeString(),
+                'duration' => $duration,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            // Re-throw the exception
+            throw $e;
         }
-        
-        throw new \Exception('Failed to schedule irrigation');
     }
     
     /**
@@ -260,43 +309,57 @@ class Plot extends Model
             throw new \Exception('No valve assigned to this plot');
         }
         
-        $duration = $durationMinutes ?? $this->irrigation_duration;
-        
-        // For recurring events, we need to check for overlapping events for the first occurrence
-        $firstOccurrenceEnd = (clone $startTime)->addMinutes($duration);
-        
-        // Check for overlapping events for the first occurrence
-        if ($this->hasOverlappingIrrigation($startTime, $duration)) {
-            throw new \Exception('There is an overlapping irrigation event scheduled for the initial time period');
-        }
-        
-        // If this is a future event, also check if there will be an active irrigation at that time
-        if ($startTime > now() && $this->hasActiveIrrigation()) {
-            throw new \Exception('Cannot schedule recurring irrigation while another event is in progress');
-        }
-        
-        // Create a parent event to represent the recurring series
-        $event = new IrrigationEvent([
-            'plot_id' => $this->id,
-            'valve_id' => $this->valve->id,
-            'user_id' => $userId,
-            'start_time' => $startTime,
-            'duration_minutes' => $duration,
-            'status' => IrrigationEvent::STATUS_SCHEDULED,
-            'trigger_type' => IrrigationEvent::TRIGGER_SCHEDULE,
-            'is_recurring' => true,
-            'recurrence_rule' => $recurrenceRule,
-            'recurrence_end_date' => $endDate,
-        ]);
-        
-        if ($event->save()) {
-            // Schedule the first occurrence
-            $this->scheduleNextRecurringEvent($event);
+        // Ensure duration is an integer
+        $duration = (int)($durationMinutes ?? $this->irrigation_duration);
+                    'plot_id' => $this->id,
+                    'valve_id' => $this->valve->id,
+                    'initiated_by' => $userId,
+                    'start_time' => $startTime,
+                    'end_time' => (clone $startTime)->addMinutes($duration),
+                    'duration_minutes' => $duration,
+                    'status' => IrrigationEvent::STATUS_SCHEDULED,
+                    'trigger_type' => IrrigationEvent::TRIGGER_SCHEDULE,
+                    'is_recurring' => true,
+                    'recurrence_rule' => $recurrenceRule,
+                    'recurrence_end_date' => $endDate,
+                ]);
+                
+                if (!$event->save()) {
+                    throw new \Exception('Failed to save recurring irrigation event');
+                }
+                
+                // Schedule the first occurrence
+                $this->scheduleNextRecurringEvent($event);
+                
+                // Log the scheduling
+                \Log::info('Scheduled recurring irrigation event', [
+                    'plot_id' => $this->id,
+                    'valve_id' => $this->valve->id,
+                    'event_id' => $event->id,
+                    'start_time' => $startTime->toDateTimeString(),
+                    'recurrence_rule' => $recurrenceRule,
+                    'end_date' => $endDate ? $endDate->toDateString() : 'No end date',
+                    'duration' => $duration,
+                    'scheduled_by' => $userId
+                ]);
+                
+                return $event;
+            });
+        } catch (\Exception $e) {
+            // Log the error
+            \Log::error('Failed to schedule recurring irrigation', [
+                'plot_id' => $this->id,
+                'user_id' => $userId,
+                'start_time' => $startTime->toDateTimeString(),
+                'recurrence_rule' => $recurrenceRule,
+                'duration' => $duration,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
             
-            return $event;
+            // Re-throw the exception
+            throw $e;
         }
-        
-        throw new \Exception('Failed to schedule recurring irrigation');
     }
     
     /**
