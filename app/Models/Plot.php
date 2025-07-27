@@ -109,7 +109,9 @@ class Plot extends Model
      */
     public function hasOverlappingIrrigation($startTime, $durationMinutes, $excludeEventId = null)
     {
-        $endTime = (clone $startTime)->addMinutes($durationMinutes);
+        // Ensure duration is an integer
+        $duration = (int)$durationMinutes;
+        $endTime = (clone $startTime)->addMinutes($duration);
         
         $query = $this->irrigationEvents()
             ->where(function($q) use ($startTime, $endTime) {
@@ -205,7 +207,8 @@ class Plot extends Model
             throw new \Exception('No valve assigned to this plot');
         }
         
-        $duration = $durationMinutes ?? $this->irrigation_duration;
+        // Ensure duration is an integer
+        $duration = (int)($durationMinutes ?? $this->irrigation_duration);
         $endTime = (clone $startTime)->addMinutes($duration);
         
         // Check for overlapping events (including currently running ones)

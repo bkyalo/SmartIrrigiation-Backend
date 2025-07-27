@@ -384,7 +384,8 @@ function formatDateTime(dateString) {
 
 // Start manual irrigation
 async function startManualIrrigation(plotId) {
-    const duration = document.getElementById('manualDuration').value;
+    // Convert duration to number to prevent Carbon error
+    const duration = parseInt(document.getElementById('manualDuration').value, 10);
     
     try {
         const response = await fetch(`/api/v1/irrigation/plots/${plotId}/start`, {
@@ -417,7 +418,8 @@ async function startManualIrrigation(plotId) {
 // Schedule one-time irrigation
 async function scheduleOneTimeIrrigation(plotId) {
     const dateTime = document.getElementById('scheduleDateTime').value;
-    const duration = document.getElementById('scheduleDuration').value;
+    // Convert duration to number to prevent Carbon error
+    const duration = parseInt(document.getElementById('scheduleDuration').value, 10);
     
     if (!dateTime) {
         showAlert('warning', 'Please select a date and time');
@@ -458,7 +460,8 @@ async function scheduleOneTimeIrrigation(plotId) {
 async function setupRecurringIrrigation(plotId) {
     const pattern = document.getElementById('recurrencePattern').value;
     const time = document.getElementById('recurrenceTime').value;
-    const duration = document.getElementById('recurrenceDuration').value;
+    // Convert duration to number to prevent Carbon error
+    const duration = parseInt(document.getElementById('recurrenceDuration').value, 10);
     
     // Combine current date with selected time
     const [hours, minutes] = time.split(':');
