@@ -42,8 +42,8 @@ class DashboardController extends Controller
         // Get all valves with their latest status
         $valves = Valve::with(['tank', 'plot'])->get();
         
-        // Get all plots with valve count
-        $plots = Plot::withCount('valves')->get();
+        // Get all plots with their valve
+        $plots = Plot::with('valve')->get();
 
         // Get system status
         $systemStatus = $this->getSystemStatus($tanks, $pumps, $valves);
