@@ -43,8 +43,34 @@ Route::prefix('v1')->group(function () {
         ->middleware('auth:sanctum');
     
     // Public routes
-    Route::apiResource('tanks', TankController::class)->only(['index', 'show']);
-    Route::apiResource('plots', PlotController::class)->only(['index', 'show']);
+    Route::apiResource('tanks', TankController::class)
+        ->only(['index', 'show'])
+        ->names('api.tanks');
+        
+    Route::apiResource('plots', PlotController::class)
+        ->only(['index', 'show'])
+        ->names('api.plots');
+    
+    // Public Irrigation routes
+    Route::prefix('irrigation')->group(function () {
+        // Start manual irrigation for a plot
+        Route::post('plots/{plot}/start', [\App\Http\Controllers\Api\IrrigationController::class, 'startManualIrrigation']);
+        
+        // Schedule one-time irrigation
+        Route::post('plots/{plot}/schedule', [\App\Http\Controllers\Api\IrrigationController::class, 'scheduleOneTimeIrrigation']);
+        
+        // Schedule recurring irrigation
+        Route::post('plots/{plot}/schedule-recurring', [\App\Http\Controllers\Api\IrrigationController::class, 'scheduleRecurringIrrigation']);
+        
+        // Get upcoming irrigation events for a plot
+        Route::get('plots/{plot}/upcoming', [\App\Http\Controllers\Api\IrrigationController::class, 'getUpcomingEvents']);
+        
+        // Get past irrigation events for a plot
+        Route::get('plots/{plot}/history', [\App\Http\Controllers\Api\IrrigationController::class, 'getPastEvents']);
+        
+        // Cancel a scheduled irrigation event
+        Route::post('events/{event}/cancel', [\App\Http\Controllers\Api\IrrigationController::class, 'cancelEvent']);
+    });
     
     // Protected routes (require authentication)
     Route::middleware(['auth:sanctum'])->group(function () {
@@ -57,7 +83,9 @@ Route::prefix('v1')->group(function () {
         Route::apiResource('tanks', TankController::class)->except(['index', 'show']);
         
         // Protected Plot routes
-        Route::apiResource('plots', PlotController::class)->except(['index', 'show']);
+        Route::apiResource('plots', PlotController::class)
+            ->except(['index', 'show'])
+            ->names('api.plots');
         
         // Valve routes
         Route::apiResource('valves', ValveController::class);
@@ -72,10 +100,13 @@ Route::prefix('v1')->group(function () {
         Route::apiResource('sensor-readings', SensorReadingController::class)->except(['update', 'destroy']);
         
         // Irrigation Event routes
-        Route::apiResource('irrigation-events', IrrigationEventController::class)->except(['update']);
+        Route::apiResource('irrigation-events', IrrigationEventController::class)
+            ->except(['update'])
+            ->names('api.irrigation-events');
         Route::post('irrigation-events/{irrigationEvent}/start', [IrrigationEventController::class, 'start']);
         Route::post('irrigation-events/{irrigationEvent}/complete', [IrrigationEventController::class, 'complete']);
         Route::post('irrigation-events/{irrigationEvent}/cancel', [IrrigationEventController::class, 'cancel']);
+        Route::post('irrigation-events/{irrigationEvent}/stop', [IrrigationEventController::class, 'stop']);
         Route::get('irrigation-events/stats/plot/{plot}', [IrrigationEventController::class, 'stats']);
         
         // Schedule routes

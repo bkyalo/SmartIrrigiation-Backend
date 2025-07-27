@@ -210,6 +210,124 @@
                     @endif
                 </div>
             </div>
+            
+            <!-- Tank Valves -->
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Valves</h5>
+                    <a href="{{ route('valves.create', ['tank_id' => $tank->id]) }}" class="btn btn-sm btn-outline-primary">
+                        <i class="bi bi-plus-lg me-1"></i> Add Valve
+                    </a>
+                </div>
+                <div class="card-body">
+                    @if($tank->valves->isEmpty())
+                        <div class="text-center py-4">
+                            <i class="bi bi-valve text-muted" style="font-size: 2.5rem;"></i>
+                            <p class="mt-2 mb-0">No valves connected to this tank</p>
+                            <p class="text-muted small">Add valves to control water flow</p>
+                            <a href="{{ route('valves.create', ['tank_id' => $tank->id]) }}" class="btn btn-primary btn-sm">
+                                <i class="bi bi-plus-lg me-1"></i> Add Valve
+                            </a>
+                        </div>
+                    @else
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Direction</th>
+                                        <th>Status</th>
+                                        <th>Current State</th>
+                                        <th>Last Actuated</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach($tank->valves as $valve)
+                                        <tr>
+                                            <td>
+                                                <a href="{{ route('valves.show', $valve) }}">{{ $valve->name }}</a>
+                                            </td>
+                                            <td>
+                                                @if($valve->valve_direction)
+                                                    <span class="badge bg-{{ $valve->valve_direction === 'inlet' ? 'info' : 'primary' }}">
+                                                        {{ ucfirst($valve->valve_direction) }}
+                                                    </span>
+                                                @else
+                                                    <span class="text-muted">-</span>
+                                                @endif
+                                            </td>
+                                            <td>
+                                                @php
+                                                    $statusBadges = [
+                                                        'operational' => ['bg-success', 'Operational'],
+                                                        'stuck_open' => ['bg-warning', 'Stuck Open'],
+                                                        'stuck_closed' => ['bg-danger', 'Stuck Closed'],
+                                                        'error' => ['bg-danger', 'Error']
+                                                    ];
+                                                    $statusBadge = $statusBadges[$valve->status] ?? ['bg-secondary', ucfirst($valve->status)];
+                                                @endphp
+                                                <span class="badge {{ $statusBadge[0] }}">
+                                                    {{ $statusBadge[1] }}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                @if($valve->status === 'operational')
+                                                    <div class="d-flex align-items-center">
+                                                        <span class="me-2">{{ $valve->is_open ? 'Open' : 'Closed' }}</span>
+                                                        <button type="button" 
+                                                                class="btn btn-xs {{ $valve->is_open ? 'btn-danger' : 'btn-success' }} toggle-valve"
+                                                                data-valve-id="{{ $valve->id }}"
+                                                                data-is-open="{{ $valve->is_open ? '1' : '0' }}">
+                                                            {{ $valve->is_open ? 'Close' : 'Open' }}
+                                                        </button>
+                                                    </div>
+                                                @else
+                                                    <span class="text-muted">N/A</span>
+                                                @endif
+                                            </td>
+                                            <td>
+                                                {{ $valve->last_actuated ? $valve->last_actuated->diffForHumans() : 'Never' }}
+                                            </td>
+                                            <td>
+                                                <div class="dropdown">
+                                                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" 
+                                                            data-bs-toggle="dropdown" aria-expanded="false">
+                                                        <i class="bi bi-three-dots-vertical"></i>
+                                                    </button>
+                                                    <ul class="dropdown-menu">
+                                                        <li>
+                                                            <a class="dropdown-item" href="{{ route('valves.show', $valve) }}">
+                                                                <i class="bi bi-eye me-2"></i>View Details
+                                                            </a>
+                                                        </li>
+                                                        <li>
+                                                            <a class="dropdown-item" href="{{ route('valves.edit', $valve) }}">
+                                                                <i class="bi bi-pencil me-2"></i>Edit
+                                                            </a>
+                                                        </li>
+                                                        <li><hr class="dropdown-divider"></li>
+                                                        <li>
+                                                            <form action="{{ route('valves.destroy', $valve) }}" method="POST" class="d-inline">
+                                                                @csrf
+                                                                @method('DELETE')
+                                                                <button type="submit" class="dropdown-item text-danger" 
+                                                                        onclick="return confirm('Are you sure you want to delete this valve?')">
+                                                                    <i class="bi bi-trash me-2"></i>Delete
+                                                                </button>
+                                                            </form>
+                                                        </li>
+                                                    </ul>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    @endif
+                </div>
+            </div>
         </div>
         
         <!-- Sidebar -->
@@ -321,4 +439,106 @@
         </div>
     </div>
 </div>
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Handle valve toggle buttons
+    document.querySelectorAll('.toggle-valve').forEach(button => {
+        button.addEventListener('click', function() {
+            const valveId = this.dataset.valveId;
+            const isOpen = this.dataset.isOpen === '1';
+            const row = this.closest('tr');
+            const stateText = row.querySelector('.valve-state-text');
+            const spinner = document.createElement('span');
+            
+            // Show loading state
+            const originalText = this.innerHTML;
+            this.disabled = true;
+            this.innerHTML = `<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> ${isOpen ? 'Closing...' : 'Opening...'}`;
+            
+            // Get CSRF token from meta tag
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+            
+            // Send AJAX request to toggle valve state
+            fetch(`/valves/${valveId}/toggle`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken,
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify({
+                    _method: 'PATCH'
+                }),
+                credentials: 'same-origin'
+            })
+            .then(async response => {
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(data.message || 'Failed to update valve state');
+                }
+                
+                if (data.success) {
+                    // Update button and state text
+                    const newIsOpen = data.is_open;
+                    const stateDisplay = row.querySelector('.valve-state-display');
+                    
+                    if (stateDisplay) {
+                        stateDisplay.textContent = newIsOpen ? 'Open' : 'Closed';
+                    }
+                    
+                    this.textContent = newIsOpen ? 'Close' : 'Open';
+                    this.className = `btn btn-xs ${newIsOpen ? 'btn-danger' : 'btn-success'} toggle-valve`;
+                    this.dataset.isOpen = newIsOpen ? '1' : '0';
+                    
+                    // Show success message
+                    showAlert('success', data.message);
+                    
+                    // Reload the page after a short delay to update all data
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1000);
+                }
+            })
+            .catch(error => {
+                console.error('Error toggling valve:', error);
+                showAlert('danger', error.message || 'Failed to update valve state');
+                this.innerHTML = originalText;
+                this.disabled = false;
+            });
+        });
+    });
+    
+    // Helper function to show alerts
+    function showAlert(type, message) {
+        // Remove any existing alerts
+        const existingAlert = document.querySelector('.alert-dynamic');
+        if (existingAlert) {
+            existingAlert.remove();
+        }
+        
+        const alertDiv = document.createElement('div');
+        alertDiv.className = `alert alert-${type} alert-dismissible fade show alert-dynamic`;
+        alertDiv.role = 'alert';
+        alertDiv.innerHTML = `
+            <i class="bi ${type === 'success' ? 'bi-check-circle' : 'bi-exclamation-triangle'} me-2"></i>
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        `;
+        
+        const container = document.querySelector('.container-fluid');
+        container.insertBefore(alertDiv, container.firstChild);
+        
+        // Auto-dismiss after 3 seconds
+        setTimeout(() => {
+            const bsAlert = new bootstrap.Alert(alertDiv);
+            bsAlert.close();
+        }, 3000);
+    }
+});
+</script>
+@endpush
+
 @endsection

@@ -176,6 +176,18 @@
                         </a>
                     </li>
                     <li class="nav-item">
+                        <a class="nav-link {{ request()->routeIs('valves.*') ? 'active' : '' }}" href="{{ route('valves.index') }}">
+                            <i class="bi bi-valve"></i>
+                            Valves
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {{ request()->routeIs('plots.*') ? 'active' : '' }}" href="{{ route('plots.index') }}">
+                            <i class="bi bi-grid-3x3-gap"></i>
+                            Plots
+                        </a>
+                    </li>
+                    <li class="nav-item">
                         <a class="nav-link" href="#analytics">
                             <i class="bi bi-graph-up"></i>
                             Analytics
@@ -264,6 +276,11 @@
         <div class="container">
             @yield('content')
         </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toastContainer" class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+        <!-- Toasts will be inserted here by JavaScript -->
     </div>
 
     <!-- Bootstrap Bundle with Popper -->

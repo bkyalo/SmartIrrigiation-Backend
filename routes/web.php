@@ -27,6 +27,7 @@ Route::get('/api/oauth2-callback', '\L5Swagger\Http\Controllers\SwaggerControlle
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\TankController;
 use App\Http\Controllers\PumpController;
+use App\Http\Controllers\ValveController;
 
 Route::get('/dashboard', [DashboardController::class, 'index'])
     ->middleware(['auth', 'verified'])
@@ -44,6 +45,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
     
     // Sensor Management
     Route::resource('sensors', \App\Http\Controllers\SensorController::class);
+    
+    // Valve Management
+    Route::resource('valves', ValveController::class);
+    
+    // Plot Management
+    Route::resource('plots', \App\Http\Controllers\PlotController::class);
+    Route::patch('valves/{valve}/open', [ValveController::class, 'open'])->name('valves.open');
+    Route::patch('valves/{valve}/close', [ValveController::class, 'close'])->name('valves.close');
+    Route::patch('valves/{valve}/toggle', [ValveController::class, 'toggle'])->name('valves.toggle');
 });
 
 // Profile Routes (Require authentication)

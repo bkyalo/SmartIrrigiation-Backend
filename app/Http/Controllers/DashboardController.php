@@ -4,8 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Models\Tank;
 use App\Models\Pump;
+use App\Models\Valve;
 use App\Models\Sensor;
 use App\Models\SensorReading;
+use App\Models\Plot;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -36,9 +38,15 @@ class DashboardController extends Controller
 
         // Get all pumps with their latest status
         $pumps = Pump::all();
+        
+        // Get all valves with their latest status
+        $valves = Valve::with(['tank', 'plot'])->get();
+        
+        // Get all plots with valve count
+        $plots = Plot::withCount('valves')->get();
 
         // Get system status
-        $systemStatus = $this->getSystemStatus($tanks, $pumps);
+        $systemStatus = $this->getSystemStatus($tanks, $pumps, $valves);
         
         // Get the latest sensor readings
         $latestReadings = $this->getLatestSensorReadings();
@@ -46,27 +54,55 @@ class DashboardController extends Controller
         return view('dashboard', [
             'tanks' => $tanks,
             'pumps' => $pumps,
+            'valves' => $valves,
+            'plots' => $plots,
             'systemStatus' => $systemStatus,
             'latestReadings' => $latestReadings
         ]);
     }
 
-    private function getSystemStatus($tanks, $pumps)
+    private function getSystemStatus($tanks, $pumps, $valves)
     {
-        // Check if any tank has critical water level (below 20%)
-        $criticalTank = $tanks->contains(function ($tank) {
-            return $tank->water_level < 20;
-        });
+        // Default to operational
+        $status = 'operational';
+        $message = 'All systems are operating normally.';
 
-        // Check if any pump is not working (status is not 'running' or 'stopped')
-        $pumpIssues = $pumps->contains(function($pump) {
-            return !in_array($pump->status, ['running', 'stopped']);
-        });
+        // Check tanks
+        foreach ($tanks as $tank) {
+            if ($tank->water_level < 20) {
+                $status = 'warning';
+                $message = "Low water level in {$tank->name}. Please check the water supply.";
+                return [
+                    'status' => $status,
+                    'message' => $message
+                ];
+            }
+        }
+
+        // Check pumps
+        foreach ($pumps as $pump) {
+            if ($pump->status === 'error') {
+                return [
+                    'status' => 'warning',
+                    'message' => "Issue detected with pump {$pump->name}. Please check the pump status."
+                ];
+            }
+        }
+        
+        // Check valves
+        foreach ($valves as $valve) {
+            if ($valve->status !== 'operational') {
+                $statusText = str_replace('_', ' ', $valve->status);
+                return [
+                    'status' => 'warning',
+                    'message' => "Valve '{$valve->name}' is {$statusText}. Please check the valve status."
+                ];
+            }
+        }
 
         return [
-            'status' => ($criticalTank || $pumpIssues) ? 'warning' : 'operational',
-            'message' => $criticalTank ? 'Low water level detected!' : 
-                        ($pumpIssues ? 'Pump issues detected!' : 'All systems operational')
+            'status' => $status,
+            'message' => $message
         ];
     }
     

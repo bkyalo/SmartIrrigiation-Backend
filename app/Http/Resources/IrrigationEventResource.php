@@ -16,32 +16,39 @@ class IrrigationEventResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
+        $isRecurring = $this->is_recurring || $this->parent_event_id !== null;
+        $parentEvent = $this->whenLoaded('parent');
+        
         return [
             'id' => $this->id,
-            'name' => $this->name,
-            'description' => $this->description,
+            'plot_id' => $this->plot_id,
+            'valve_id' => $this->valve_id,
+            'user_id' => $this->user_id,
             'status' => $this->status,
-            'is_recurring' => (bool) $this->is_recurring,
-            'recurrence_pattern' => $this->when($this->is_recurring, $this->recurrence_pattern),
-            'recurrence_interval' => $this->when($this->is_recurring, (int) $this->recurrence_interval),
-            'recurrence_ends_at' => $this->when($this->is_recurring, $this->recurrence_ends_at?->toIso8601String()),
+            'trigger_type' => $this->trigger_type,
+            'is_recurring' => $isRecurring,
+            'parent_event_id' => $this->parent_event_id,
+            'recurrence_rule' => $this->when($isRecurring, $this->recurrence_rule),
+            'recurrence_end_date' => $this->when($isRecurring, $this->recurrence_end_date?->toIso8601String()),
             'timing' => [
                 'scheduled' => [
                     'start' => $this->start_time->toIso8601String(),
-                    'end' => $this->end_time->toIso8601String(),
-                    'duration_minutes' => $this->start_time->diffInMinutes($this->end_time),
+                    'end' => $this->end_time?->toIso8601String(),
+                    'duration_minutes' => $this->duration_minutes,
                 ],
                 'actual' => [
-                    'start' => $this->actual_start_time?->toIso8601String(),
-                    'end' => $this->actual_end_time?->toIso8601String(),
-                    'duration_minutes' => $this->actual_start_time && $this->actual_end_time 
-                        ? $this->actual_start_time->diffInMinutes($this->actual_end_time)
+                    'start' => $this->start_time?->toIso8601String(),
+                    'end' => $this->end_time?->toIso8601String(),
+                    'duration_minutes' => $this->start_time && $this->end_time 
+                        ? $this->start_time->diffInMinutes($this->end_time)
                         : null,
                 ],
             ],
             'water_usage' => [
-                'volume' => $this->water_volume ? (float) $this->water_volume : null,
-                'flow_rate' => $this->water_flow_rate ? (float) $this->water_flow_rate : null,
+                'volume' => $this->volume_used ? (float) $this->volume_used : null,
+                'flow_rate' => $this->whenLoaded('valve', function() {
+                    return $this->valve ? (float) $this->valve->flow_rate : null;
+                }),
                 'unit' => 'liters',
             ],
             'plot' => $this->whenLoaded('plot', [

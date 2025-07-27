@@ -89,6 +89,64 @@
                 @endforelse
             </div>
 
+            <!-- Plots Overview -->
+            <h3 class="text-lg font-semibold mb-4">Irrigation Plots</h3>
+            <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4 mb-4">
+                @forelse($plots as $plot)
+                    @php
+                        $statusColor = [
+                            'active' => 'bg-success',
+                            'inactive' => 'bg-secondary',
+                            'maintenance' => 'bg-warning',
+                        ][$plot->status] ?? 'bg-secondary';
+                    @endphp
+                    <div class="col">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <h5 class="card-title mb-0">{{ $plot->name }}</h5>
+                                    <span class="badge {{ $statusColor }}">{{ ucfirst($plot->status) }}</span>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <div class="d-flex justify-content-between small text-muted mb-1">
+                                        <span>Crop Type</span>
+                                        <span>{{ $plot->crop_type ?? 'N/A' }}</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between small text-muted mb-1">
+                                        <span>Area</span>
+                                        <span>{{ number_format($plot->area, 2) }} m²</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between small text-muted">
+                                        <span>Moisture Threshold</span>
+                                        <span>{{ $plot->moisture_threshold }}%</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <a href="{{ route('plots.show', $plot) }}" class="btn btn-sm btn-outline-primary">
+                                        View Details
+                                    </a>
+                                    <small class="text-muted">
+                                        {{ $plot->valves_count ?? 0 }} valve(s)
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                @empty
+                    <div class="col-12">
+                        <div class="text-center py-4">
+                            <i class="bi bi-grid-3x3-gap text-muted" style="font-size: 2rem;"></i>
+                            <p class="text-muted mt-2 mb-0">No plots configured yet</p>
+                            <a href="{{ route('plots.create') }}" class="btn btn-sm btn-outline-primary mt-2">
+                                <i class="bi bi-plus-lg"></i> Add Plot
+                            </a>
+                        </div>
+                    </div>
+                @endforelse
+            </div>
+
             <!-- Sensor Readings -->
             <div class="row mb-4">
                 <div class="col-12 mb-3">
@@ -220,6 +278,100 @@
                                                 </td>
                                             </tr>
                                         @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Valves Status -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <h5 class="card-title mb-0">Valves Status</h5>
+                                <a href="{{ route('valves.index') }}" class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-list-ul me-1"></i> View All Valves
+                                </a>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Valve</th>
+                                            <th>Type</th>
+                                            <th>Location</th>
+                                            <th>Status</th>
+                                            <th>Flow Rate</th>
+                                            <th>Last Actuated</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @forelse($valves as $valve)
+                                            @php
+                                                $statusClass = [
+                                                    'operational' => 'success',
+                                                    'open' => 'success',
+                                                    'closed' => 'secondary',
+                                                    'error' => 'danger',
+                                                    'maintenance' => 'warning',
+                                                    'leaking' => 'danger',
+                                                    'obstructed' => 'warning',
+                                                ][$valve->status] ?? 'secondary';
+                                                
+                                                $statusText = ucfirst(str_replace('_', ' ', $valve->status));
+                                                
+                                                // Determine location name based on type
+                                                $locationName = '';
+                                                if ($valve->type === 'tank' && $valve->tank) {
+                                                    $locationName = $valve->tank->name;
+                                                } elseif ($valve->type === 'plot' && $valve->plot) {
+                                                    $locationName = $valve->plot->name;
+                                                } elseif ($valve->type === 'main') {
+                                                    $locationName = 'Main Line';
+                                                }
+                                            @endphp
+                                            <tr>
+                                                <td>
+                                                    <div class="d-flex align-items-center">
+                                                        <div class="flex-shrink-0 me-3">
+                                                            <div class="avatar-sm bg-{{ $statusClass }} bg-opacity-10 rounded p-2">
+                                                                <i class="bi bi-valve text-{{ $statusClass }} fs-5"></i>
+                                                            </div>
+                                                        </div>
+                                                        <div>
+                                                            <h6 class="mb-0">{{ $valve->name }}</h6>
+                                                            <small class="text-muted">#{{ $valve->external_device_id ?? 'N/A' }}</small>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <span class="badge bg-light text-{{ $valve->type === 'main' ? 'primary' : ($valve->type === 'tank' ? 'info' : 'success') }}">
+                                                        {{ ucfirst($valve->type) }}
+                                                    </span>
+                                                </td>
+                                                <td>{{ $locationName ?: 'N/A' }}</td>
+                                                <td>
+                                                    <span class="badge bg-{{ $statusClass }}-subtle text-{{ $statusClass }}">
+                                                        {{ $statusText }}
+                                                    </span>
+                                                </td>
+                                                <td>{{ $valve->flow_rate ? $valve->flow_rate . ' L/min' : 'N/A' }}</td>
+                                                <td>{{ $valve->last_actuated ? $valve->last_actuated->diffForHumans() : 'Never' }}</td>
+                                            </tr>
+                                        @empty
+                                            <tr>
+                                                <td colspan="6" class="text-center py-4">
+                                                    <div class="text-muted">No valves configured yet.</div>
+                                                    <a href="{{ route('valves.create') }}" class="btn btn-sm btn-outline-primary mt-2">
+                                                        <i class="bi bi-plus-circle me-1"></i> Add Valve
+                                                    </a>
+                                                </td>
+                                            </tr>
+                                        @endforelse
                                     </tbody>
                                 </table>
                             </div>

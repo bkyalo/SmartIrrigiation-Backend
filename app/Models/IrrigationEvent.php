@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Jobs\CloseValveJob;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -38,7 +39,7 @@ class IrrigationEvent extends Model
         'plot_id',
         'valve_id',
         'pump_id',
-        'user_id',
+        'initiated_by',
         'schedule_id',
         'start_time',
         'end_time',
@@ -46,6 +47,10 @@ class IrrigationEvent extends Model
         'volume_used',
         'status',
         'trigger_type',
+        'recurrence_rule',
+        'recurrence_end_date',
+        'parent_event_id',
+        'is_recurring',
         'notes',
         'metadata',
     ];
@@ -58,8 +63,10 @@ class IrrigationEvent extends Model
     protected $casts = [
         'start_time' => 'datetime',
         'end_time' => 'datetime',
+        'recurrence_end_date' => 'datetime',
         'duration_minutes' => 'integer',
         'volume_used' => 'decimal:2',
+        'is_recurring' => 'boolean',
         'metadata' => 'array',
         'deleted_at' => 'datetime',
     ];
@@ -115,7 +122,7 @@ class IrrigationEvent extends Model
      */
     public function user(): BelongsTo
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class, 'initiated_by');
     }
 
     /**
@@ -334,6 +341,25 @@ class IrrigationEvent extends Model
         $this->metadata = $metadata;
         
         return $this->save();
+    }
+
+    /**
+     * Schedule the valve to close after the specified duration.
+     * 
+     * @return void
+     */
+    public function closeAfterDuration(): void
+    {
+        if (!$this->valve) {
+            return;
+        }
+
+        // Schedule the valve to close after the specified duration
+        $closeTime = now()->addMinutes((int)$this->duration_minutes);
+        
+        // Use Laravel's job dispatching with a delay
+        CloseValveJob::dispatch($this->valve, $this)
+            ->delay($closeTime);
     }
 
     /**
